@@ -26,8 +26,7 @@ import { Course, Grade, GRADE_SCALE, Assessment, AssessmentType } from './types'
 import { 
   calculateCurrentPercentage, 
   getLetterGrade, 
-  calculateGradePoint, 
-  calculateNextScoreNeeded 
+  calculateGradePoint 
 } from './utils/gpa';
 
 // Mock Initial Data
@@ -365,7 +364,7 @@ function CourseDetail({
           onClick={() => setIsEditingCourse(true)}
           className="flex items-center justify-center gap-2 text-[#8B95A1] font-bold cursor-pointer hover:text-[#3182F6] transition-colors text-base"
         >
-          <span>Target Grade: {course.targetGrade}</span>
+          <span>Target Grade: {course.targetGrade || 'Not Set'}</span>
           <ChevronDown size={18} className="mt-0.5" />
         </div>
       </div>
@@ -384,31 +383,41 @@ function CourseDetail({
         </div>
 
         {/* Target Progress Bar */}
-        <div className="space-y-3">
-          <div className="flex justify-between items-end">
-            <div className="flex items-center gap-2">
-              <Target size={16} className={isExceeding ? "text-emerald-500" : "text-[#3182F6]"} />
-              <span className="text-[12px] font-bold text-[#8B95A1] uppercase tracking-wider">Target Progress</span>
+        {course.targetGrade ? (
+          <div className="space-y-3">
+            <div className="flex justify-between items-end">
+              <div className="flex items-center gap-2">
+                <Target size={16} className={isExceeding ? "text-emerald-500" : "text-[#3182F6]"} />
+                <span className="text-[12px] font-bold text-[#8B95A1] uppercase tracking-wider">Target Progress</span>
+              </div>
+              <span className={`text-sm font-black ${isExceeding ? "text-emerald-500" : "text-[#3182F6]"}`}>
+                {isExceeding ? 'EXCEEDED' : `${targetProgress.toFixed(0)}%`}
+              </span>
             </div>
-            <span className={`text-sm font-black ${isExceeding ? "text-emerald-500" : "text-[#3182F6]"}`}>
-              {isExceeding ? 'EXCEEDED' : `${targetProgress.toFixed(0)}%`}
-            </span>
+            <div className="h-4 bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-full overflow-hidden relative">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${targetProgress}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className={`h-full rounded-full ${isExceeding ? 'bg-emerald-500' : 'bg-[#3182F6]'}`}
+              />
+            </div>
+            <p className="text-[11px] text-[#B0B8C1] font-bold text-center leading-relaxed">
+              {isExceeding 
+                ? `Target ${course.targetGrade} reached!` 
+                : `${(targetMinScore - percentage).toFixed(1)}% more for ${course.targetGrade}`
+              }
+            </p>
           </div>
-          <div className="h-4 bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-full overflow-hidden relative">
-            <motion.div 
-              initial={{ width: 0 }}
-              animate={{ width: `${targetProgress}%` }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              className={`h-full rounded-full ${isExceeding ? 'bg-emerald-500' : 'bg-[#3182F6]'}`}
-            />
+        ) : (
+          <div 
+            onClick={() => setIsEditingCourse(true)}
+            className="py-4 border-2 border-dashed border-[#F2F4F6] dark:border-[#2C2C34] rounded-2xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-[#F9FAFB] dark:hover:bg-[#2C2C34] transition-colors"
+          >
+            <Target size={20} className="text-[#B0B8C1]" />
+            <p className="text-[12px] font-bold text-[#8B95A1]">Tap to set your target grade</p>
           </div>
-          <p className="text-[11px] text-[#B0B8C1] font-bold text-center leading-relaxed">
-            {isExceeding 
-              ? `Target ${course.targetGrade} reached!` 
-              : `${(targetMinScore - percentage).toFixed(1)}% more for ${course.targetGrade}`
-            }
-          </p>
-        </div>
+        )}
       </div>
 
       {/* Final Exam Mode Toggle */}
@@ -669,7 +678,7 @@ function AddCourseModal({
 }) {
   const [name, setName] = useState(initialCourse?.name || '');
   const [isAP, setIsAP] = useState(initialCourse?.isAP || false);
-  const [targetGrade, setTargetGrade] = useState<Grade>(initialCourse?.targetGrade || 'A');
+  const [targetGrade, setTargetGrade] = useState<Grade | undefined>(initialCourse?.targetGrade);
   const [isError, setIsError] = useState(false);
 
   const handleSubmit = (e: FormEvent) => {
@@ -753,13 +762,14 @@ function AddCourseModal({
           </div>
 
           <div className="space-y-3">
-            <label className="text-base font-bold text-[#8B95A1] uppercase tracking-wider">Target Grade</label>
+            <label className="text-base font-bold text-[#8B95A1] uppercase tracking-wider">Target Grade (Optional)</label>
             <div className="relative">
               <select 
-                value={targetGrade}
-                onChange={e => setTargetGrade(e.target.value as Grade)}
+                value={targetGrade || ''}
+                onChange={e => setTargetGrade((e.target.value as Grade) || undefined)}
                 className="w-full p-5 bg-[#F2F4F6] dark:bg-[#202027] dark:text-[#F9FAFB] rounded-2xl outline-none font-bold appearance-none cursor-pointer pr-12 text-lg"
               >
+                <option value="">Not Set</option>
                 {GRADE_SCALE.map(s => (
                   <option key={s.grade} value={s.grade}>{s.grade} (Min {s.minScore}%)</option>
                 ))}

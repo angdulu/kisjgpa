@@ -37,5 +37,5 @@ export interface Course {
   isAP: boolean;
   hasFinal?: boolean; // New property for Final Exam Mode
   assessments: Assessment[];
-  targetGrade: Grade;
+  targetGrade?: Grade;
 }
