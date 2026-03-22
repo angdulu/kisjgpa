@@ -326,6 +326,7 @@ function CourseDetail({
   const [isAddingAssessment, setIsAddingAssessment] = useState<AssessmentType | null>(null);
   const [editingAssessment, setEditingAssessment] = useState<Assessment | null>(null);
   const [isEditingCourse, setIsEditingCourse] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   const assessmentsByType = {
     Summative: course.assessments.filter(a => a.type === 'Summative'),
@@ -510,12 +511,59 @@ function CourseDetail({
       </section>
 
       <button 
-        onClick={onDelete}
+        onClick={() => setIsConfirmingDelete(true)}
         className="w-full py-4 text-red-500 font-bold flex items-center justify-center gap-2 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-2xl transition-colors"
       >
         <Trash2 size={20} />
         Delete Course
       </button>
+
+      {/* Confirmation Modal */}
+      <AnimatePresence>
+        {isConfirmingDelete && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-6"
+            onClick={() => setIsConfirmingDelete(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="w-full max-w-sm bg-white dark:bg-[#111111] rounded-[32px] p-8 space-y-6 text-center"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mx-auto">
+                <AlertCircle size={32} />
+              </div>
+              
+              <div className="space-y-3">
+                <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">Delete Course?</h2>
+                <p className="text-[#8B95A1] text-base leading-relaxed">
+                  Are you sure you want to delete <span className="font-bold text-[#191F28] dark:text-[#F9FAFB]">{course.name}</span>? All assessment data for this course will be lost.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-4 pt-2">
+                <button 
+                  onClick={onDelete}
+                  className="w-full py-5 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 transition-colors text-lg"
+                >
+                  Yes, Delete Course
+                </button>
+                <button 
+                  onClick={() => setIsConfirmingDelete(false)}
+                  className="w-full py-5 bg-[#F2F4F6] dark:bg-[#202027] text-[#8B95A1] font-bold rounded-2xl hover:bg-[#E5E8EB] dark:hover:bg-[#2C2C34] transition-colors text-lg"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Add/Edit Assessment Modal */}
       <AnimatePresence>
