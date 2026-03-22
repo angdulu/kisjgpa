@@ -482,7 +482,7 @@ function CourseDetail({
                           e.stopPropagation();
                           onDeleteAssessment(a.id);
                         }}
-                        className="p-2 text-[#B0B8C1] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                        className="p-2 text-[#B0B8C1] hover:text-red-500 opacity-40 group-hover:opacity-100 transition-all"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -527,6 +527,11 @@ function CourseDetail({
               setIsAddingAssessment(null);
               setEditingAssessment(null);
             }}
+            onDelete={editingAssessment ? () => {
+              onDeleteAssessment(course.id, editingAssessment.id);
+              setIsAddingAssessment(null);
+              setEditingAssessment(null);
+            } : undefined}
           />
         )}
       </AnimatePresence>
@@ -552,12 +557,14 @@ function AddAssessmentModal({
   type, 
   initialAssessment,
   onClose, 
-  onSave 
+  onSave,
+  onDelete
 }: { 
   type: AssessmentType, 
   initialAssessment?: Assessment,
   onClose: () => void, 
-  onSave: (a: Assessment) => void 
+  onSave: (a: Assessment) => void,
+  onDelete?: () => void
 }) {
   const [score, setScore] = useState(initialAssessment?.score.toString() || '');
   const [memo, setMemo] = useState(initialAssessment?.memo || '');
@@ -589,7 +596,17 @@ function AddAssessmentModal({
         className="w-full max-w-sm bg-white dark:bg-[#111111] rounded-[32px] p-8 space-y-6"
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">{initialAssessment ? 'Edit' : 'Add'} {type} Score</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">{initialAssessment ? 'Edit' : 'Add'} {type} Score</h2>
+          {onDelete && (
+            <button 
+              onClick={onDelete}
+              className="p-2 text-[#8B95A1] hover:text-red-500 transition-colors"
+            >
+              <Trash2 size={20} />
+            </button>
+          )}
+        </div>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <label className="text-[12px] font-bold text-[#8B95A1] uppercase tracking-widest">Score (%)</label>
