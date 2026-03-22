@@ -1,0 +1,5 @@
+{
+  "name": "KISJ GPA Calculator",
+  "description": "A minimal, Toss-style GPA calculator and strategy tool for KISJ students, featuring weighted AP logic and grade prediction.",
+  "requestFramePermissions": []
+}
