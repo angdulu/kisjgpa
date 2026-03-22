@@ -153,10 +153,7 @@ export default function App() {
                 <ArrowLeft size={28} />
               </button>
               <div className="flex items-center gap-2">
-                <div className="text-right mr-2">
-                  <div className="text-[10px] text-[#8B95A1] font-bold uppercase tracking-widest">Course GPA</div>
-                  <div className="text-xl font-black text-[#3182F6]">{calculateGradePoint(selectedCourse!, isWeighted).toFixed(3)}</div>
-                </div>
+                {/* Course GPA removed as requested */}
               </div>
             </div>
           ) : (
