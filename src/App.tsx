@@ -31,33 +31,7 @@ import {
 } from './utils/gpa';
 
 // Mock Initial Data
-const INITIAL_COURSES: Course[] = [
-  {
-    id: '1',
-    name: 'AP Calculus BC',
-    isAP: true,
-    hasFinal: true,
-    targetGrade: 'A',
-    assessments: [
-      { id: 'a1', type: 'Summative', score: 95, memo: 'Unit 1 Test', date: '2026-03-10' },
-      { id: 'a2', type: 'Summative', score: 88, memo: 'Unit 2 Test', date: '2026-03-20' },
-      { id: 'a3', type: 'Formative', score: 100, memo: 'Unit 1 Quiz', date: '2026-03-05' },
-      { id: 'a4', type: 'Formative', score: 92, memo: 'Unit 2 Quiz', date: '2026-03-12' },
-      { id: 'a5', type: 'Formative', score: 100, memo: 'Homework 1', date: '2026-03-15' }
-    ]
-  },
-  {
-    id: '2',
-    name: 'English 10',
-    isAP: false,
-    hasFinal: false,
-    targetGrade: 'A-',
-    assessments: [
-      { id: 'a5', type: 'Summative', score: 92, memo: 'Essay 1', date: '2026-03-08' },
-      { id: 'a6', type: 'Formative', score: 95, memo: 'Participation', date: '2026-03-14' }
-    ]
-  }
-];
+const INITIAL_COURSES: Course[] = [];
 
 export default function App() {
   const [courses, setCourses] = useState<Course[]>(() => {
@@ -495,9 +469,8 @@ function CourseDetail({
                       <div className="w-10 h-10 bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-xl flex items-center justify-center text-[#8B95A1]">
                         <FileText size={20} />
                       </div>
-                      <div>
+                      <div className="flex items-center">
                         <p className="font-bold text-sm dark:text-[#F9FAFB]">{a.memo}</p>
-                        <p className="text-[10px] text-[#B0B8C1] font-medium">{a.date}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
@@ -597,8 +570,7 @@ function AddAssessmentModal({
       id: initialAssessment?.id || Date.now().toString(),
       type,
       score: parseFloat(score),
-      memo: memo.trim() || 'Assessment',
-      date: initialAssessment?.date || new Date().toISOString().split('T')[0]
+      memo: memo.trim() || 'Assessment'
     });
   };
 

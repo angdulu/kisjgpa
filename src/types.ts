@@ -29,7 +29,6 @@ export interface Assessment {
   type: AssessmentType;
   score: number;
   memo: string;
-  date: string;
 }
 
 export interface Course {
