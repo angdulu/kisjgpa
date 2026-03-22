@@ -139,18 +139,26 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F2F4F6] dark:bg-[#0F1012] text-[#191F28] dark:text-[#F9FAFB] font-sans selection:bg-blue-100 dark:selection:bg-blue-900 transition-colors duration-300">
-      <div className="w-full max-w-md mx-auto bg-white dark:bg-[#17171C] min-h-screen relative overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-[#F2F4F6] dark:bg-[#111111] text-[#191F28] dark:text-[#F9FAFB] font-sans selection:bg-blue-100 dark:selection:bg-blue-900 transition-colors duration-300">
+      <div className="w-full max-w-md mx-auto bg-white dark:bg-[#111111] min-h-screen relative overflow-hidden flex flex-col">
         
         {/* Header */}
-        <header className="sticky top-0 z-20 bg-white/80 dark:bg-[#17171C]/80 backdrop-blur-md px-6 py-5 flex items-center justify-between border-b border-[#F2F4F6] dark:border-[#2C2C34]">
+        <header className="sticky top-0 z-20 bg-white/80 dark:bg-[#111111]/80 backdrop-blur-md px-6 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-5 flex items-center justify-between border-b border-[#F2F4F6] dark:border-[#2C2C34]">
           {selectedCourseId ? (
-            <button 
-              onClick={() => setSelectedCourseId(null)}
-              className="p-3 -ml-2 hover:bg-[#F2F4F6] dark:hover:bg-[#2C2C34] rounded-full transition-colors"
-            >
-              <ArrowLeft size={28} />
-            </button>
+            <div className="flex items-center justify-between w-full">
+              <button 
+                onClick={() => setSelectedCourseId(null)}
+                className="p-3 -ml-2 hover:bg-[#F2F4F6] dark:hover:bg-[#2C2C34] rounded-full transition-colors"
+              >
+                <ArrowLeft size={28} />
+              </button>
+              <div className="flex items-center gap-2">
+                <div className="text-right mr-2">
+                  <div className="text-[10px] text-[#8B95A1] font-bold uppercase tracking-widest">Course GPA</div>
+                  <div className="text-xl font-black text-[#3182F6]">{calculateGradePoint(selectedCourse!, isWeighted).toFixed(3)}</div>
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-[#3182F6] rounded-xl flex items-center justify-center">
@@ -206,7 +214,7 @@ export default function App() {
         </main>
 
         {!selectedCourseId && (
-          <div className="px-6 py-5 bg-white dark:bg-[#17171C] border-t border-[#F2F4F6] dark:border-[#2C2C34] z-10">
+          <div className="px-6 py-5 bg-white dark:bg-[#111111] border-t border-[#F2F4F6] dark:border-[#2C2C34] z-10">
             <div className="bg-[#F9FAFB] dark:bg-[#202027] p-4 rounded-2xl border border-[#F2F4F6] dark:border-[#2C2C34] flex items-center justify-between gap-4">
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2 text-[#3182F6]">
@@ -368,17 +376,19 @@ function CourseDetail({
     >
       {/* Summary Card */}
       <div className="text-center space-y-3 relative">
-        <button 
-          onClick={() => setIsEditingCourse(true)}
-          className="absolute right-0 top-0 p-3 text-[#8B95A1] hover:bg-[#F2F4F6] dark:hover:bg-[#2C2C34] rounded-full transition-colors"
-        >
-          <Settings size={24} />
-        </button>
-        <div className="flex items-center justify-center gap-3">
-          <h2 className="text-4xl font-extrabold tracking-tight dark:text-[#F9FAFB] leading-tight">{course.name}</h2>
-          {course.isAP && (
-            <span className="text-sm font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2.5 py-1 rounded-full uppercase">AP Course</span>
-          )}
+        <div className="flex flex-col items-center justify-center gap-2">
+          <h2 className="text-4xl font-extrabold tracking-tight dark:text-[#F9FAFB] leading-tight px-4">{course.name}</h2>
+          <div className="flex items-center gap-2">
+            {course.isAP && (
+              <span className="text-[11px] font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2.5 py-1 rounded-full uppercase">AP Course</span>
+            )}
+            <button 
+              onClick={() => setIsEditingCourse(true)}
+              className="p-2 text-[#8B95A1] hover:bg-[#F2F4F6] dark:hover:bg-[#2C2C34] rounded-full transition-colors flex items-center justify-center"
+            >
+              <Settings size={20} />
+            </button>
+          </div>
         </div>
         <div 
           onClick={() => setIsEditingCourse(true)}
@@ -390,49 +400,41 @@ function CourseDetail({
       </div>
 
       {/* Grade Gauge */}
-      <div className="bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] p-10 rounded-3xl space-y-8 shadow-sm">
+      <div className="bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] p-7 rounded-3xl space-y-6 shadow-sm">
         <div className="flex justify-between items-center">
           <div>
-            <p className="text-sm text-[#8B95A1] font-bold uppercase tracking-wider mb-2">Current Grade</p>
-            <p className="text-7xl font-black text-[#3182F6]">{letterGrade}</p>
+            <p className="text-[12px] text-[#8B95A1] font-bold uppercase tracking-wider mb-1">Current Grade</p>
+            <p className="text-6xl font-black text-[#3182F6]">{letterGrade}</p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-[#8B95A1] font-bold uppercase tracking-wider mb-2">Percentage</p>
-            <p className="text-4xl font-bold text-[#191F28] dark:text-[#F9FAFB]">{percentage.toFixed(1)}%</p>
+            <p className="text-[12px] text-[#8B95A1] font-bold uppercase tracking-wider mb-1">Percentage</p>
+            <p className="text-3xl font-bold text-[#191F28] dark:text-[#F9FAFB]">{percentage.toFixed(1)}%</p>
           </div>
         </div>
 
         {/* Target Progress Bar */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex justify-between items-end">
             <div className="flex items-center gap-2">
-              <Target size={18} className={isExceeding ? "text-emerald-500" : "text-[#3182F6]"} />
-              <span className="text-sm font-bold text-[#8B95A1] uppercase tracking-wider">Target Progress</span>
+              <Target size={16} className={isExceeding ? "text-emerald-500" : "text-[#3182F6]"} />
+              <span className="text-[12px] font-bold text-[#8B95A1] uppercase tracking-wider">Target Progress</span>
             </div>
-            <span className={`text-base font-black ${isExceeding ? "text-emerald-500" : "text-[#3182F6]"}`}>
+            <span className={`text-sm font-black ${isExceeding ? "text-emerald-500" : "text-[#3182F6]"}`}>
               {isExceeding ? 'EXCEEDED' : `${targetProgress.toFixed(0)}%`}
             </span>
           </div>
-          <div className="h-5 bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-full overflow-hidden relative">
+          <div className="h-4 bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-full overflow-hidden relative">
             <motion.div 
               initial={{ width: 0 }}
               animate={{ width: `${targetProgress}%` }}
               transition={{ duration: 1, ease: "easeOut" }}
               className={`h-full rounded-full ${isExceeding ? 'bg-emerald-500' : 'bg-[#3182F6]'}`}
             />
-            {isExceeding && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: [0.4, 0.7, 0.4] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="absolute inset-0 bg-white/20"
-              />
-            )}
           </div>
-          <p className="text-[12px] text-[#B0B8C1] font-bold text-center leading-relaxed">
+          <p className="text-[11px] text-[#B0B8C1] font-bold text-center leading-relaxed">
             {isExceeding 
-              ? `You've reached your target of ${course.targetGrade} (${targetMinScore}%)!` 
-              : `${(targetMinScore - percentage).toFixed(1)}% more needed for ${course.targetGrade}`
+              ? `Target ${course.targetGrade} reached!` 
+              : `${(targetMinScore - percentage).toFixed(1)}% more for ${course.targetGrade}`
             }
           </p>
         </div>
@@ -615,7 +617,7 @@ function AddAssessmentModal({
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-sm bg-white dark:bg-[#17171C] rounded-[32px] p-8 space-y-6"
+        className="w-full max-w-sm bg-white dark:bg-[#111111] rounded-[32px] p-8 space-y-6"
         onClick={e => e.stopPropagation()}
       >
         <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">{initialAssessment ? 'Edit' : 'Add'} {type} Score</h2>
@@ -625,8 +627,14 @@ function AddAssessmentModal({
             <input 
               autoFocus
               type="number" 
+              inputMode="decimal"
+              pattern="[0-9]*"
+              step="any"
+              min="0"
+              max="100"
               value={score}
               onChange={e => setScore(e.target.value)}
+              onFocus={e => e.target.select()}
               placeholder="0-100"
               className="w-full p-5 bg-[#F2F4F6] dark:bg-[#202027] dark:text-[#F9FAFB] rounded-2xl outline-none focus:ring-2 focus:ring-[#3182F6] transition-all font-bold text-lg"
             />
@@ -712,7 +720,7 @@ function AddCourseModal({
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="w-full max-w-md bg-white dark:bg-[#17171C] rounded-t-[32px] p-8 space-y-8"
+        className="w-full max-w-md bg-white dark:bg-[#111111] rounded-t-[32px] p-8 space-y-8"
         onClick={e => e.stopPropagation()}
       >
         <div className="w-12 h-1.5 bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-full mx-auto mb-2" />
@@ -799,7 +807,7 @@ function ResetModal({ onClose, onConfirm }: { onClose: () => void, onConfirm: ()
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        className="w-full max-w-sm bg-white dark:bg-[#17171C] rounded-[32px] p-8 space-y-6 text-center"
+        className="w-full max-w-sm bg-white dark:bg-[#111111] rounded-[32px] p-8 space-y-6 text-center"
         onClick={e => e.stopPropagation()}
       >
         <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mx-auto">
