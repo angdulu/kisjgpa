@@ -585,7 +585,7 @@ function CourseDetail({
               setEditingAssessment(null);
             }}
             onDelete={editingAssessment ? () => {
-              onDeleteAssessment(course.id, editingAssessment.id);
+              onDeleteAssessment(editingAssessment.id);
               setIsAddingAssessment(null);
               setEditingAssessment(null);
             } : undefined}
@@ -625,15 +625,23 @@ function AddAssessmentModal({
 }) {
   const [score, setScore] = useState(initialAssessment?.score.toString() || '');
   const [memo, setMemo] = useState(initialAssessment?.memo || '');
+  const [isError, setIsError] = useState(false);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!score) return;
     
+    const scoreVal = parseFloat(score);
+    if (scoreVal < 0 || scoreVal > 100) {
+      setIsError(true);
+      setTimeout(() => setIsError(false), 800);
+      return;
+    }
+    
     onSave({
       id: initialAssessment?.id || Date.now().toString(),
       type,
-      score: parseFloat(score),
+      score: scoreVal,
       memo: memo.trim() || 'Assessment'
     });
   };
@@ -667,19 +675,24 @@ function AddAssessmentModal({
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <label className="text-[12px] font-bold text-[#8B95A1] uppercase tracking-widest">Score (%)</label>
-            <input 
+            <motion.input 
               autoFocus
               type="number" 
               inputMode="decimal"
               pattern="[0-9]*"
               step="any"
-              min="0"
-              max="100"
               value={score}
-              onChange={e => setScore(e.target.value)}
+              onChange={e => {
+                setScore(e.target.value);
+                if (isError) setIsError(false);
+              }}
               onFocus={e => e.target.select()}
+              animate={isError ? { x: [-10, 10, -10, 10, -10, 10, 0] } : {}}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
               placeholder="0-100"
-              className="w-full p-5 bg-[#F2F4F6] dark:bg-[#202027] dark:text-[#F9FAFB] rounded-2xl outline-none focus:ring-2 focus:ring-[#3182F6] transition-all font-bold text-lg"
+              className={`w-full p-5 bg-[#F2F4F6] dark:bg-[#202027] dark:text-[#F9FAFB] rounded-2xl outline-none transition-all font-bold text-lg border-2 ${
+                isError ? 'border-[#FF3B30] bg-[#FFF5F5] dark:bg-red-950/30' : 'border-transparent focus:ring-2 focus:ring-[#3182F6]'
+              }`}
             />
           </div>
           <div className="space-y-2">
@@ -731,15 +744,10 @@ function AddCourseModal({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
-      setIsError(true);
-      setTimeout(() => setIsError(false), 800);
-      return;
-    }
-
+    
     const courseData: Course = {
       id: initialCourse?.id || Date.now().toString(),
-      name,
+      name: name.trim() || 'Untitled Course',
       isAP,
       hasFinal: initialCourse?.hasFinal || false,
       assessments: initialCourse?.assessments || [],
@@ -773,7 +781,7 @@ function AddCourseModal({
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="space-y-3">
             <label className={`text-base font-bold uppercase tracking-wider transition-colors ${isError ? 'text-[#FF3B30]' : 'text-[#8B95A1]'}`}>
-              Course Name
+              Course Name (Optional)
             </label>
             <motion.input 
               autoFocus
