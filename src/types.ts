@@ -38,4 +38,5 @@ export interface Course {
   hasFinal?: boolean; // New property for Final Exam Mode
   assessments: Assessment[];
   targetGrade?: Grade;
+  credit: number;
 }

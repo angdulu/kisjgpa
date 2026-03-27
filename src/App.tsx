@@ -32,6 +32,92 @@ import {
 // Mock Initial Data
 const INITIAL_COURSES: Course[] = [];
 
+const COMMON_COURSES = [
+  "AP Seminar",
+  "AP Research",
+  "AP English Language",
+  "AP English Literature",
+  "AP Calculus AB",
+  "AP Calculus BC",
+  "AP Statistics",
+  "AP Biology",
+  "AP Chemistry",
+  "AP Environmental Science",
+  "AP Physics 1",
+  "AP Physics 2",
+  "AP Physics C – Mechanics",
+  "AP Physics C – Electricity and Magnetism",
+  "AP Chinese",
+  "AP Spanish",
+  "AP Human Geography",
+  "AP World History",
+  "AP US History",
+  "AP Psychology",
+  "AP Microeconomics",
+  "AP Macroeconomics",
+  "AP Comparative Government",
+  "AP Computer Science A",
+  "AP Computer Science Principles",
+  "AP 2-D Design",
+  "AP 3-D Design",
+  "AP Drawing",
+  "AP Music Theory",
+  "English 9",
+  "Writing 9",
+  "English 10",
+  "English 11",
+  "English 12",
+  "Creative Writing",
+  "Film as Literature",
+  "Journalism",
+  "Advanced Writing",
+  "Geometry",
+  "Algebra II",
+  "Pre-Calculus",
+  "Calculus",
+  "Multivariable Calculus",
+  "Biology",
+  "Chemistry",
+  "Physics",
+  "Marine Science",
+  "Global Studies 9",
+  "Global Studies 10",
+  "US History",
+  "Economics",
+  "Psychology",
+  "Sociology",
+  "Chinese I",
+  "Chinese II",
+  "Chinese III",
+  "Chinese IV",
+  "Heritage Chinese",
+  "Spanish I",
+  "Spanish II",
+  "Spanish III",
+  "Spanish IV",
+  "Health and Physical Education 9",
+  "Health and Physical Education 10",
+  "Team Sports",
+  "Personal Fitness",
+  "Design and Technology",
+  "Advanced Design and Technology",
+  "Digital Media Publications",
+  "Digital Photography",
+  "Engineering",
+  "Advanced Engineering",
+  "Graphic Design",
+  "Programming 1",
+  "Programming 2",
+  "Robotics",
+  "Advanced Robotics",
+  "Videography",
+  "Yearbook",
+  "Korean Language 9",
+  "Korean Language 10",
+  "Korean Social Studies 9",
+  "Korean Social Studies 10"
+];
+
 export default function App() {
   const [courses, setCourses] = useState<Course[]>(() => {
     const saved = localStorage.getItem('kisj-gpa-courses');
@@ -60,8 +146,9 @@ export default function App() {
 
   const overallGPA = useMemo(() => {
     if (courses.length === 0) return "0.000";
-    const sum = courses.reduce((acc, c) => acc + calculateGradePoint(c, isWeighted), 0);
-    return (sum / courses.length).toFixed(3);
+    const totalPoints = courses.reduce((acc, c) => acc + (calculateGradePoint(c, isWeighted) * (c.credit || 1.0)), 0);
+    const totalCredits = courses.reduce((acc, c) => acc + (c.credit || 1.0), 0);
+    return (totalPoints / totalCredits).toFixed(3);
   }, [courses, isWeighted]);
 
   const addCourse = (newCourse: Course) => {
@@ -739,8 +826,52 @@ function AddCourseModal({
 }) {
   const [name, setName] = useState(initialCourse?.name || '');
   const [isAP, setIsAP] = useState(initialCourse?.isAP || false);
+  const [credit, setCredit] = useState(initialCourse?.credit || 1.0);
   const [targetGrade, setTargetGrade] = useState<Grade | undefined>(initialCourse?.targetGrade);
   const [isError, setIsError] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(!!initialCourse);
+
+  const suggestions = useMemo(() => {
+    if (!name.trim()) return [];
+    return COMMON_COURSES.filter(c => 
+      c.toLowerCase().includes(name.toLowerCase()) && 
+      c.toLowerCase() !== name.toLowerCase()
+    ).slice(0, 5);
+  }, [name]);
+
+  const handleNameChange = (newName: string) => {
+    setName(newName);
+    if (isError) setIsError(false);
+    
+    // Auto-toggle AP weighting
+    if (newName.trim().toUpperCase().startsWith('AP')) {
+      setIsAP(true);
+    } else if (newName.trim() === '') {
+      setIsAP(false);
+    }
+
+    // Auto-set credit for Korean courses
+    const lowerName = newName.toLowerCase();
+    if (lowerName.includes('korean language') || lowerName.includes('korean social')) {
+      setCredit(0.5);
+    } else {
+      setCredit(1.0);
+    }
+  };
+
+  const selectSuggestion = (suggestion: string) => {
+    setName(suggestion);
+    // Explicitly set AP weighting based on suggestion
+    const lowerSuggestion = suggestion.toLowerCase();
+    setIsAP(lowerSuggestion.startsWith('ap'));
+
+    // Credit Logic
+    if (lowerSuggestion.includes('korean language') || lowerSuggestion.includes('korean social')) {
+      setCredit(0.5);
+    } else {
+      setCredit(1.0);
+    }
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -751,7 +882,8 @@ function AddCourseModal({
       isAP,
       hasFinal: initialCourse?.hasFinal || false,
       assessments: initialCourse?.assessments || [],
-      targetGrade
+      targetGrade,
+      credit: credit
     };
 
     if (onSave) onSave(courseData);
@@ -779,7 +911,7 @@ function AddCourseModal({
         <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">{initialCourse ? 'Edit Course' : 'Add New Course'}</h2>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="space-y-3">
+          <div className="space-y-3 relative">
             <label className={`text-base font-bold uppercase tracking-wider transition-colors ${isError ? 'text-[#FF3B30]' : 'text-[#8B95A1]'}`}>
               Course Name (Optional)
             </label>
@@ -787,10 +919,7 @@ function AddCourseModal({
               autoFocus
               type="text" 
               value={name}
-              onChange={e => {
-                setName(e.target.value);
-                if (isError) setIsError(false);
-              }}
+              onChange={e => handleNameChange(e.target.value)}
               animate={isError ? { x: [-15, 15, -15, 15, -15, 15, 0] } : {}}
               transition={{ duration: 0.6, ease: "easeInOut" }}
               placeholder="e.g. AP World History"
@@ -798,6 +927,30 @@ function AddCourseModal({
                 isError ? 'border-[#FF3B30] bg-[#FFF5F5] dark:bg-red-950/30' : 'border-transparent focus:ring-2 focus:ring-[#3182F6]'
               }`}
             />
+            
+            {/* Suggestions */}
+            <AnimatePresence>
+              {suggestions.length > 0 && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute left-0 right-0 top-[calc(100%+8px)] bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] rounded-2xl shadow-xl z-50 overflow-hidden divide-y divide-[#F2F4F6] dark:divide-[#2C2C34]"
+                >
+                  {suggestions.map((s, i) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => selectSuggestion(s)}
+                      className="w-full p-4 text-left hover:bg-[#F2F4F6] dark:hover:bg-[#2C2C34] transition-colors font-bold text-sm flex items-center justify-between group"
+                    >
+                      <span className="dark:text-[#F9FAFB]">{s}</span>
+                      <ChevronRight size={16} className="text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors" />
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <div className="flex items-center justify-between p-5 bg-[#F2F4F6] dark:bg-[#202027] rounded-2xl">
@@ -832,6 +985,49 @@ function AddCourseModal({
               </select>
               <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-[#8B95A1] pointer-events-none" size={24} />
             </div>
+          </div>
+
+          <div className="pt-2">
+            {!showAdvanced ? (
+              <button 
+                type="button"
+                onClick={() => setShowAdvanced(true)}
+                className="text-sm font-bold text-[#3182F6] hover:underline"
+              >
+                Advanced Settings
+              </button>
+            ) : (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className="space-y-4 pt-2"
+              >
+                <div className="flex items-center justify-between p-5 bg-[#F2F4F6] dark:bg-[#202027] rounded-2xl">
+                  <div className="flex flex-col gap-1">
+                    <span className="font-bold text-lg dark:text-[#F9FAFB]">Credits</span>
+                    <span className="text-sm text-[#8B95A1]">
+                      {credit === 0.5 ? 'Korean Course (0.5 Unit)' : 'Standard Course (1.0 Unit)'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      type="button"
+                      onClick={() => setCredit(0.5)}
+                      className={`px-4 py-2 rounded-xl font-bold transition-all ${credit === 0.5 ? 'bg-[#3182F6] text-white shadow-md' : 'bg-white dark:bg-[#333D4B] text-[#8B95A1]'}`}
+                    >
+                      0.5
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setCredit(1.0)}
+                      className={`px-4 py-2 rounded-xl font-bold transition-all ${credit === 1.0 ? 'bg-[#3182F6] text-white shadow-md' : 'bg-white dark:bg-[#333D4B] text-[#8B95A1]'}`}
+                    >
+                      1.0
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </div>
 
           <button 
