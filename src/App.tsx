@@ -216,8 +216,8 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F2F4F6] dark:bg-[#111111] text-[#191F28] dark:text-[#F9FAFB] font-sans selection:bg-blue-100 dark:selection:bg-blue-900 transition-colors duration-300">
-      <div className="w-full max-w-md mx-auto bg-white dark:bg-[#111111] min-h-screen relative overflow-hidden flex flex-col">
+    <div className="min-h-[100dvh] bg-white dark:bg-[#111111] text-[#191F28] dark:text-[#F9FAFB] font-sans selection:bg-blue-100 dark:selection:bg-blue-900 transition-colors duration-300">
+      <div className="w-full max-w-md mx-auto bg-white dark:bg-[#111111] min-h-[100dvh] relative overflow-hidden flex flex-col">
         
         {/* Header */}
         <header className="sticky top-0 z-20 bg-white/80 dark:bg-[#111111]/80 backdrop-blur-md px-6 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-5 flex items-center justify-between border-b border-[#F2F4F6] dark:border-[#2C2C34]">
@@ -943,7 +943,7 @@ function AddCourseModal({
         <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">{initialCourse ? 'Edit Course' : 'Add New Course'}</h2>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="space-y-3 relative">
+          <div className="space-y-3 relative z-10">
             <label className={`text-base font-bold uppercase tracking-wider transition-colors ${isError ? 'text-[#FF3B30]' : 'text-[#8B95A1]'}`}>
               Course Name (Optional)
             </label>
