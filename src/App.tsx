@@ -118,6 +118,23 @@ const COMMON_COURSES = [
   "Korean Social Studies 10"
 ];
 
+const COURSE_ALIASES: Record<string, string[]> = {
+  "pe": ["Health and Physical Education 9", "Health and Physical Education 10", "Team Sports", "Personal Fitness"],
+  "ap lang": ["AP English Language"],
+  "ap lit": ["AP English Literature"],
+  "ap comp sci": ["AP Computer Science A", "AP Computer Science Principles"],
+  "ap csa": ["AP Computer Science A"],
+  "ap csp": ["AP Computer Science Principles"],
+  "calc": ["Calculus", "AP Calculus AB", "AP Calculus BC", "Multivariable Calculus"],
+  "chem": ["Chemistry", "AP Chemistry"],
+  "bio": ["Biology", "AP Biology"],
+  "phys": ["Physics", "AP Physics 1", "AP Physics 2", "AP Physics C – Mechanics", "AP Physics C – Electricity and Magnetism"],
+  "gov": ["AP Comparative Government"],
+  "econ": ["Economics", "AP Microeconomics", "AP Macroeconomics"],
+  "psych": ["Psychology", "AP Psychology"],
+  "hist": ["AP World History", "AP US History", "US History", "Global Studies 9", "Global Studies 10"],
+};
+
 export default function App() {
   const [courses, setCourses] = useState<Course[]>(() => {
     const saved = localStorage.getItem('kisj-gpa-courses');
@@ -832,11 +849,26 @@ function AddCourseModal({
   const [showAdvanced, setShowAdvanced] = useState(!!initialCourse);
 
   const suggestions = useMemo(() => {
-    if (!name.trim()) return [];
-    return COMMON_COURSES.filter(c => 
-      c.toLowerCase().includes(name.toLowerCase()) && 
-      c.toLowerCase() !== name.toLowerCase()
-    ).slice(0, 5);
+    const query = name.trim().toLowerCase();
+    if (!query) return [];
+    
+    // Check aliases
+    let aliasMatches: string[] = [];
+    for (const [alias, targets] of Object.entries(COURSE_ALIASES)) {
+      if (query.includes(alias)) {
+        aliasMatches = [...aliasMatches, ...targets];
+      }
+    }
+    
+    const matches = COMMON_COURSES.filter(c => 
+      c.toLowerCase().includes(query) && 
+      c.toLowerCase() !== query
+    );
+    
+    // Combine and deduplicate
+    return Array.from(new Set([...aliasMatches, ...matches]))
+      .filter(c => c.toLowerCase() !== query)
+      .slice(0, 5);
   }, [name]);
 
   const handleNameChange = (newName: string) => {
