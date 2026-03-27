@@ -217,7 +217,7 @@ export default function App() {
 
   return (
     <div className="min-h-[100dvh] bg-white dark:bg-[#111111] text-[#191F28] dark:text-[#F9FAFB] font-sans selection:bg-blue-100 dark:selection:bg-blue-900 transition-colors duration-300">
-      <div className="w-full max-w-md mx-auto bg-white dark:bg-[#111111] min-h-[100dvh] relative overflow-hidden flex flex-col">
+      <div className="w-full max-w-md mx-auto bg-white dark:bg-[#111111] min-h-[100dvh] relative overflow-hidden flex flex-col pb-[env(safe-area-inset-bottom)]">
         
         {/* Header */}
         <header className="sticky top-0 z-20 bg-white/80 dark:bg-[#111111]/80 backdrop-blur-md px-6 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-5 flex items-center justify-between border-b border-[#F2F4F6] dark:border-[#2C2C34]">
