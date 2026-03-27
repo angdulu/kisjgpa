@@ -836,7 +836,7 @@ function AddCourseModal({
 
           <button 
             type="submit"
-            className="w-full py-6 bg-[#3182F6] text-white font-bold rounded-2xl shadow-lg shadow-blue-200 hover:bg-[#1B64DA] transition-colors text-xl"
+            className="w-full py-6 bg-[#3182F6] text-white font-bold rounded-2xl hover:bg-[#1B64DA] transition-colors text-xl"
           >
             {initialCourse ? 'Save Changes' : 'Add Course'}
           </button>
