@@ -939,7 +939,7 @@ function AddCourseModal({
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         className="w-full max-w-md bg-white dark:bg-[#111111] rounded-t-[32px] p-8 space-y-8"
-        onClick={e => e.stopPropagation()}
+        onClick={() => setShowSuggestions(false)}
       >
         <div className="w-12 h-1.5 bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-full mx-auto mb-2" />
         
@@ -959,6 +959,7 @@ function AddCourseModal({
               animate={isError ? { x: [-15, 15, -15, 15, -15, 15, 0] } : {}}
               transition={{ duration: 0.6, ease: "easeInOut" }}
               placeholder="e.g. AP World History"
+              onClick={e => { e.stopPropagation(); setShowSuggestions(true); }}
               className={`w-full p-5 bg-[#F2F4F6] dark:bg-[#202027] dark:text-[#F9FAFB] rounded-2xl outline-none transition-all border-2 text-lg ${
                 isError ? 'border-[#FF3B30] bg-[#FFF5F5] dark:bg-red-950/30' : 'border-transparent focus:ring-2 focus:ring-[#3182F6]'
               }`}
@@ -972,7 +973,18 @@ function AddCourseModal({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   className="absolute left-0 right-0 top-[calc(100%+8px)] bg-white dark:bg-[#2C2C34] border-2 border-[#E5E8EB] dark:border-[#333D4B] rounded-2xl shadow-2xl z-50 overflow-hidden divide-y divide-[#F2F4F6] dark:divide-[#2C2C34] backdrop-blur-md"
+                  onClick={e => e.stopPropagation()}
                 >
+                  <div className="flex items-center justify-between px-4 py-2 bg-[#F9FAFB] dark:bg-[#2C2C34]/50 border-b border-[#F2F4F6] dark:border-[#333D4B]">
+                    <span className="text-[11px] font-bold text-[#8B95A1] uppercase tracking-widest">{suggestions.length} Suggestions</span>
+                    <button 
+                      type="button"
+                      onClick={() => setShowSuggestions(false)}
+                      className="text-[11px] font-bold text-[#3182F6] hover:underline"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
                   {suggestions.map((s, i) => (
                     <button
                       key={s}
