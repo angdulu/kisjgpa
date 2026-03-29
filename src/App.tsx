@@ -951,7 +951,6 @@ function AddCourseModal({
               Course Name (Optional)
             </label>
             <motion.input 
-              autoFocus
               type="text" 
               value={name}
               onChange={e => handleNameChange(e.target.value)}
