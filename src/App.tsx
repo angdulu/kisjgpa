@@ -604,7 +604,7 @@ function CourseDetail({
                   </div>
                 ))}
                 {list.length === 0 && (
-                  <div className="p-8 text-center text-[#B0B8C1] text-xs font-medium italic">
+                  <div className="p-8 text-center text-[#B0B8C1] text-sm font-medium italic">
                     {isFinalDisabled ? 'Enable Final Exam Mode to add scores.' : `No ${type.toLowerCase()} scores yet.`}
                   </div>
                 )}
