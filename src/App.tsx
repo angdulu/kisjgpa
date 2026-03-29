@@ -943,7 +943,7 @@ function AddCourseModal({
         <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">{initialCourse ? 'Edit Course' : 'Add New Course'}</h2>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="space-y-3 relative z-10">
+          <div className="space-y-3 relative z-30">
             <label className={`text-base font-bold uppercase tracking-wider transition-colors ${isError ? 'text-[#FF3B30]' : 'text-[#8B95A1]'}`}>
               Course Name (Optional)
             </label>
@@ -967,7 +967,7 @@ function AddCourseModal({
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="absolute left-0 right-0 top-[calc(100%+8px)] bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] rounded-2xl shadow-xl z-50 overflow-hidden divide-y divide-[#F2F4F6] dark:divide-[#2C2C34]"
+                  className="absolute left-0 right-0 top-[calc(100%+8px)] bg-white dark:bg-[#2C2C34] border-2 border-[#E5E8EB] dark:border-[#333D4B] rounded-2xl shadow-2xl z-50 overflow-hidden divide-y divide-[#F2F4F6] dark:divide-[#2C2C34] backdrop-blur-md"
                 >
                   {suggestions.map((s, i) => (
                     <button
@@ -977,7 +977,9 @@ function AddCourseModal({
                       className="w-full p-4 text-left hover:bg-[#F2F4F6] dark:hover:bg-[#2C2C34] transition-colors font-bold text-sm flex items-center justify-between group"
                     >
                       <span className="dark:text-[#F9FAFB]">{s}</span>
-                      <ChevronRight size={16} className="text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors" />
+                      <div className="w-8 h-8 bg-[#F2F4F6] dark:bg-[#333D4B] rounded-lg flex items-center justify-center transition-colors group-hover:bg-[#3182F6] group-hover:text-white">
+                        <ChevronRight size={18} />
+                      </div>
                     </button>
                   ))}
                 </motion.div>
