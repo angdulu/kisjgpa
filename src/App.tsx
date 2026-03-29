@@ -475,15 +475,15 @@ function CourseDetail({
       </div>
 
       {/* Grade Gauge */}
-      <div className="bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] p-7 rounded-3xl space-y-6 shadow-sm">
+      <div className="bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] p-6 rounded-3xl space-y-5 shadow-sm">
         <div className="flex justify-between items-center">
           <div>
-            <p className="text-[12px] text-[#8B95A1] font-bold uppercase tracking-wider mb-1">Current Grade</p>
-            <p className="text-6xl font-black text-[#3182F6]">{letterGrade}</p>
+            <p className="text-[11px] text-[#8B95A1] font-bold uppercase tracking-wider mb-1">Current Grade</p>
+            <p className="text-5xl font-black text-[#3182F6]">{letterGrade}</p>
           </div>
           <div className="text-right">
-            <p className="text-[12px] text-[#8B95A1] font-bold uppercase tracking-wider mb-1">Percentage</p>
-            <p className="text-3xl font-bold text-[#191F28] dark:text-[#F9FAFB]">{percentage.toFixed(1)}%</p>
+            <p className="text-[11px] text-[#8B95A1] font-bold uppercase tracking-wider mb-1">Percentage</p>
+            <p className="text-2xl font-bold text-[#191F28] dark:text-[#F9FAFB]">{percentage.toFixed(1)}%</p>
           </div>
         </div>
 
@@ -517,7 +517,7 @@ function CourseDetail({
         ) : (
           <div 
             onClick={() => setIsEditingCourse(true)}
-            className="py-4 border-2 border-dashed border-[#F2F4F6] dark:border-[#2C2C34] rounded-2xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-[#F9FAFB] dark:hover:bg-[#2C2C34] transition-colors"
+            className="py-3 border-2 border-dashed border-[#F2F4F6] dark:border-[#2C2C34] rounded-2xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-[#F9FAFB] dark:hover:bg-[#2C2C34] transition-colors"
           >
             <Target size={20} className="text-[#B0B8C1]" />
             <p className="text-[12px] font-bold text-[#8B95A1]">Tap to set your target grade</p>
@@ -653,13 +653,13 @@ function CourseDetail({
               <div className="flex flex-col gap-4 pt-2">
                 <button 
                   onClick={onDelete}
-                  className="w-full py-5 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 transition-colors text-lg"
+                  className="w-full py-4.5 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 transition-colors text-lg"
                 >
                   Yes, Delete Course
                 </button>
                 <button 
                   onClick={() => setIsConfirmingDelete(false)}
-                  className="w-full py-5 bg-[#F2F4F6] dark:bg-[#202027] text-[#8B95A1] font-bold rounded-2xl hover:bg-[#E5E8EB] dark:hover:bg-[#2C2C34] transition-colors text-lg"
+                  className="w-full py-4.5 bg-[#F2F4F6] dark:bg-[#202027] text-[#8B95A1] font-bold rounded-2xl hover:bg-[#E5E8EB] dark:hover:bg-[#2C2C34] transition-colors text-lg"
                 >
                   Cancel
                 </button>
@@ -1071,7 +1071,7 @@ function AddCourseModal({
 
           <button 
             type="submit"
-            className="w-full py-6 bg-[#3182F6] text-white font-bold rounded-2xl hover:bg-[#1B64DA] transition-colors text-xl"
+            className="w-full py-5 bg-[#3182F6] text-white font-bold rounded-2xl hover:bg-[#1B64DA] transition-colors text-xl"
           >
             {initialCourse ? 'Save Changes' : 'Add Course'}
           </button>
