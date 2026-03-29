@@ -847,6 +847,7 @@ function AddCourseModal({
   const [targetGrade, setTargetGrade] = useState<Grade | undefined>(initialCourse?.targetGrade);
   const [isError, setIsError] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(!!initialCourse);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const suggestions = useMemo(() => {
     const query = name.trim().toLowerCase();
@@ -889,6 +890,7 @@ function AddCourseModal({
     } else {
       setCredit(1.0);
     }
+    setShowSuggestions(true);
   };
 
   const selectSuggestion = (suggestion: string) => {
@@ -903,6 +905,7 @@ function AddCourseModal({
     } else {
       setCredit(1.0);
     }
+    setShowSuggestions(false);
   };
 
   const handleSubmit = (e: FormEvent) => {
@@ -952,6 +955,7 @@ function AddCourseModal({
               type="text" 
               value={name}
               onChange={e => handleNameChange(e.target.value)}
+              onFocus={() => setShowSuggestions(true)}
               animate={isError ? { x: [-15, 15, -15, 15, -15, 15, 0] } : {}}
               transition={{ duration: 0.6, ease: "easeInOut" }}
               placeholder="e.g. AP World History"
@@ -962,7 +966,7 @@ function AddCourseModal({
             
             {/* Suggestions */}
             <AnimatePresence>
-              {suggestions.length > 0 && (
+              {showSuggestions && suggestions.length > 0 && (
                 <motion.div 
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
