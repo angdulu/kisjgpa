@@ -975,16 +975,6 @@ function AddCourseModal({
                   className="absolute left-0 right-0 top-[calc(100%+8px)] bg-white dark:bg-[#2C2C34] border-2 border-[#E5E8EB] dark:border-[#333D4B] rounded-2xl shadow-2xl z-50 overflow-y-auto max-h-56 custom-scrollbar divide-y divide-[#F2F4F6] dark:divide-[#2C2C34] backdrop-blur-md"
                   onClick={e => e.stopPropagation()}
                 >
-                  <div className="flex items-center justify-between px-4 py-2 bg-[#F9FAFB] dark:bg-[#2C2C34]/50 border-b border-[#F2F4F6] dark:border-[#333D4B]">
-                    <span className="text-[11px] font-bold text-[#8B95A1] uppercase tracking-widest">{suggestions.length} Suggestions</span>
-                    <button 
-                      type="button"
-                      onClick={() => setShowSuggestions(false)}
-                      className="text-[11px] font-bold text-[#3182F6] hover:underline"
-                    >
-                      Dismiss
-                    </button>
-                  </div>
                   {suggestions.map((s, i) => (
                     <button
                       key={s}
