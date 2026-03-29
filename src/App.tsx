@@ -939,7 +939,7 @@ function AddCourseModal({
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         className="w-full max-w-md bg-white dark:bg-[#111111] rounded-t-[32px] p-8 space-y-8"
-        onClick={() => setShowSuggestions(false)}
+        onClick={(e) => { e.stopPropagation(); setShowSuggestions(false); }}
       >
         <div className="w-12 h-1.5 bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-full mx-auto mb-2" />
         
