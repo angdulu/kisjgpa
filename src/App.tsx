@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo, FormEvent, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, Reorder } from 'motion/react';
 import { 
   Minus,
   Plus, 
@@ -25,7 +25,8 @@ import {
   Menu,
   X,
   History,
-  BarChart3
+  BarChart3,
+  GripVertical
 } from 'lucide-react';
 import { Course, Grade, GRADE_SCALE, Assessment, AssessmentType, SemesterGPA, SemesterGradeCount } from './types';
 import { 
@@ -321,12 +322,14 @@ export default function App() {
                 <CurrentTermView 
                   courses={courses} 
                   onSelectCourse={setSelectedCourseId} 
+                  onReorder={setCourses}
                 />
               ) : activeTab === 'cumulative' ? (
                 <CumulativeView 
                   semesters={cumulativeGPAs} 
                   onAddSemester={addSemesterGPA}
                   onDeleteSemester={deleteSemesterGPA}
+                  onReorder={setCumulativeGPAs}
                 />
               ) : (
                 <QuickGPAView />
@@ -507,7 +510,15 @@ function SidebarItem({ icon, label, isActive, onClick }: {
   );
 }
 
-function CurrentTermView({ courses, onSelectCourse }: { courses: Course[], onSelectCourse: (id: string) => void }) {
+function CurrentTermView({ 
+  courses, 
+  onSelectCourse,
+  onReorder 
+}: { 
+  courses: Course[], 
+  onSelectCourse: (id: string) => void,
+  onReorder: (newCourses: Course[]) => void
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -516,38 +527,44 @@ function CurrentTermView({ courses, onSelectCourse }: { courses: Course[], onSel
       className="space-y-8"
     >
       <section>
-        <h2 className="text-2xl font-bold mb-5 px-1">My Courses</h2>
         <div className="grid gap-3.5">
-          {courses.map(course => {
-            const percentage = calculateCurrentPercentage(course);
-            const letterGrade = getLetterGrade(percentage);
+          <Reorder.Group axis="y" values={courses} onReorder={onReorder} className="grid gap-3.5">
+            {courses.map(course => {
+              const percentage = calculateCurrentPercentage(course);
+              const letterGrade = getLetterGrade(percentage);
 
-            return (
-              <motion.div
-                key={course.id}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={() => onSelectCourse(course.id)}
-                className="bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] p-5 rounded-2xl cursor-pointer flex items-center justify-between group transition-all hover:shadow-sm"
-              >
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-xl leading-tight dark:text-[#F9FAFB]">{course.name}</span>
-                    {course.isAP && (
-                      <span className="text-[11px] font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded uppercase">AP</span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="text-2xl font-black text-[#3182F6] leading-none mb-1.5">{letterGrade}</div>
-                    <div className="text-[12px] text-[#8B95A1] font-bold">{percentage.toFixed(1)}%</div>
-                  </div>
-                  <ChevronRight size={22} className="text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors" />
-                </div>
-              </motion.div>
-            );
-          })}
+              return (
+                <Reorder.Item
+                  key={course.id}
+                  value={course}
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => onSelectCourse(course.id)}
+                    className="bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] p-5 rounded-2xl cursor-pointer flex items-center justify-between group transition-all hover:shadow-sm"
+                  >
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-3">
+                        <GripVertical size={20} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
+                        <span className="font-bold text-xl leading-tight dark:text-[#F9FAFB]">{course.name}</span>
+                        {course.isAP && (
+                          <span className="text-[11px] font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded uppercase">AP</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <div className="text-2xl font-black text-[#3182F6] leading-none mb-1.5">{letterGrade}</div>
+                        <div className="text-[12px] text-[#8B95A1] font-bold">{percentage.toFixed(1)}%</div>
+                      </div>
+                      <ChevronRight size={22} className="text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors" />
+                    </div>
+                  </motion.div>
+                </Reorder.Item>
+              );
+            })}
+          </Reorder.Group>
           {courses.length === 0 && (
             <div className="text-center py-12 text-[#8B95A1]">
               <Calculator size={48} className="mx-auto mb-4 opacity-20" />
@@ -733,56 +750,69 @@ function CourseDetail({
                 )}
               </div>
               
-              <div className="bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] rounded-3xl overflow-hidden divide-y divide-[#F2F4F6] dark:divide-[#2C2C34]">
+              <Reorder.Group 
+                axis="y" 
+                values={list} 
+                onReorder={(newList) => {
+                  const otherTypes = course.assessments.filter(a => a.type !== type);
+                  onUpdateCourse({ ...course, assessments: [...otherTypes, ...newList] });
+                }}
+                className="bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] rounded-3xl overflow-hidden divide-y divide-[#F2F4F6] dark:divide-[#2C2C34]"
+              >
                 {list.map(a => (
-                  <div 
-                    key={a.id} 
-                    onClick={() => !isFinalDisabled && setEditingAssessment(a)}
-                    className={`p-4 flex items-center justify-between hover:bg-[#F9FAFB] dark:hover:bg-[#2C2C34] transition-colors group cursor-pointer ${a.enabled === false ? 'opacity-80 bg-[#fbfbfb11]' : ''}`}
+                  <Reorder.Item
+                    key={a.id}
+                    value={a}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-xl flex items-center justify-center text-[#8B95A1]">
-                        <FileText size={20} />
+                    <div 
+                      onClick={() => !isFinalDisabled && setEditingAssessment(a)}
+                      className={`p-4 flex items-center justify-between hover:bg-[#F9FAFB] dark:hover:bg-[#2C2C34] transition-colors group cursor-pointer ${a.enabled === false ? 'opacity-80 bg-[#fbfbfb11]' : ''}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <GripVertical size={18} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
+                        <div className="w-10 h-10 bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-xl flex items-center justify-center text-[#8B95A1]">
+                          <FileText size={20} />
+                        </div>
+                        <div className="flex items-center">
+                          <p className="font-bold text-sm dark:text-[#F9FAFB]">{a.memo}</p>
+                        </div>
                       </div>
-                      <div className="flex items-center">
-                        <p className="font-bold text-sm dark:text-[#F9FAFB]">{a.memo}</p>
+                      <div className="flex items-center gap-3">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onUpdateAssessment({ ...a, enabled: a.enabled === false });
+                          }}
+                          className={`w-9 h-5 rounded-full relative transition-all duration-200 ${a.enabled !== false ? 'bg-[#3182F6]' : 'bg-[#B0B8C1] dark:bg-[#333D4B]'}`}
+                        >
+                          <motion.div 
+                            animate={{ x: a.enabled !== false ? 18 : 2 }}
+                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                            className="absolute top-1 left-0 w-3 h-3 bg-white rounded-full shadow-sm"
+                          />
+                        </button>
+                        <div className="text-right min-w-[3.5rem]">
+                          <p className={`font-black text-lg transition-all ${a.enabled === false ? 'text-[#B0B8C1] line-through opacity-60' : 'dark:text-[#F9FAFB]'}`}>{a.score}%</p>
+                        </div>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteAssessment(a.id);
+                          }}
+                          className="p-2 text-[#B0B8C1] hover:text-red-500 opacity-40 group-hover:opacity-100 transition-all"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onUpdateAssessment({ ...a, enabled: a.enabled === false });
-                        }}
-                        className={`w-9 h-5 rounded-full relative transition-all duration-200 ${a.enabled !== false ? 'bg-[#3182F6]' : 'bg-[#B0B8C1] dark:bg-[#333D4B]'}`}
-                      >
-                        <motion.div 
-                          animate={{ x: a.enabled !== false ? 18 : 2 }}
-                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                          className="absolute top-1 left-0 w-3 h-3 bg-white rounded-full shadow-sm"
-                        />
-                      </button>
-                      <div className="text-right min-w-[3.5rem]">
-                        <p className={`font-black text-lg transition-all ${a.enabled === false ? 'text-[#B0B8C1] line-through opacity-60' : 'dark:text-[#F9FAFB]'}`}>{a.score}%</p>
-                      </div>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteAssessment(a.id);
-                        }}
-                        className="p-2 text-[#B0B8C1] hover:text-red-500 opacity-40 group-hover:opacity-100 transition-all"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
+                  </Reorder.Item>
                 ))}
-                {list.length === 0 && (
+              </Reorder.Group>
+              {list.length === 0 && (
                   <div className="p-8 text-center text-[#B0B8C1] text-sm font-medium italic">
                     {isFinalDisabled ? 'Enable Final Exam Mode to add scores.' : `No ${type.toLowerCase()} scores yet.`}
                   </div>
                 )}
-              </div>
             </div>
           );
         })}
@@ -1390,11 +1420,13 @@ function QuickGPAView() {
 function CumulativeView({ 
   semesters, 
   onAddSemester, 
-  onDeleteSemester 
+  onDeleteSemester,
+  onReorder
 }: { 
   semesters: SemesterGPA[], 
   onAddSemester: (s: SemesterGPA) => void,
-  onDeleteSemester: (id: string) => void
+  onDeleteSemester: (id: string) => void,
+  onReorder: (newSemesters: SemesterGPA[]) => void
 }) {
   const [isAdding, setIsAdding] = useState(false);
 
@@ -1416,34 +1448,38 @@ function CumulativeView({
       </section>
 
       <div className="grid gap-4">
-        {semesters.map(s => (
-          <div 
-            key={s.id}
-            className="p-5 bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] rounded-2xl flex items-center justify-between"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-xl flex items-center justify-center text-[#3182F6]">
-                <BarChart3 size={24} />
-              </div>
-              <div>
-                <h4 className="font-bold text-lg dark:text-[#F9FAFB]">{s.label}</h4>
-                <p className="text-sm text-[#8B95A1] font-medium">{s.semester}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-2xl font-black text-[#3182F6]">{s.gpa.toFixed(3)}</p>
-              </div>
-              <button 
-                onClick={() => onDeleteSemester(s.id)}
-                className="p-2 text-[#B0B8C1] hover:text-red-500 transition-colors"
-                title="Delete"
+        <Reorder.Group axis="y" values={semesters} onReorder={onReorder} className="grid gap-4">
+          {semesters.map(s => (
+            <Reorder.Item key={s.id} value={s}>
+              <div 
+                className="p-5 bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] rounded-2xl flex items-center justify-between"
               >
-                <Trash2 size={18} />
-              </button>
-            </div>
-          </div>
-        ))}
+                <div className="flex items-center gap-4">
+                  <GripVertical size={20} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
+                  <div className="w-12 h-12 bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-xl flex items-center justify-center text-[#3182F6]">
+                    <BarChart3 size={24} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-lg dark:text-[#F9FAFB]">{s.label}</h4>
+                    <p className="text-sm text-[#8B95A1] font-medium">{s.semester}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <p className="text-2xl font-black text-[#3182F6]">{s.gpa.toFixed(3)}</p>
+                  </div>
+                  <button 
+                    onClick={() => onDeleteSemester(s.id)}
+                    className="p-2 text-[#B0B8C1] hover:text-red-500 transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+            </Reorder.Item>
+          ))}
+        </Reorder.Group>
 
         {semesters.length === 0 && (
           <div className="text-center py-12 text-[#8B95A1] border-2 border-dashed border-[#F2F4F6] dark:border-[#2C2C34] rounded-3xl">
