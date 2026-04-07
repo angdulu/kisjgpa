@@ -544,13 +544,13 @@ function CurrentTermView({
                     onClick={() => onSelectCourse(course.id)}
                     className="bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] p-5 rounded-2xl cursor-pointer flex items-center justify-between group transition-all hover:shadow-sm"
                   >
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-3">
-                        <GripVertical size={20} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
-                        <span className="font-bold text-xl leading-tight dark:text-[#F9FAFB]">{course.name}</span>
+                    <div className="flex items-center gap-3">
+                      <GripVertical size={20} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
+                      <div className="flex flex-col gap-0.5">
                         {course.isAP && (
-                          <span className="text-[11px] font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded uppercase">AP</span>
+                          <span className="text-[10px] font-black text-orange-500 dark:text-orange-400 uppercase tracking-widest leading-none mb-0.5">AP Course</span>
                         )}
+                        <span className="font-bold text-xl leading-tight dark:text-[#F9FAFB]">{course.name}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -628,19 +628,17 @@ function CourseDetail({
     >
       {/* Summary Card */}
       <div className="text-center space-y-3 relative">
-        <div className="flex flex-col items-center justify-center gap-2">
+        <div className="flex flex-col items-center justify-center gap-1.5">
+          {course.isAP && (
+            <span className="text-[11px] font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2.5 py-1 rounded-full uppercase">AP Course</span>
+          )}
           <h2 className="text-4xl font-extrabold tracking-tight dark:text-[#F9FAFB] leading-tight px-4">{course.name}</h2>
-          <div className="flex items-center gap-2">
-            {course.isAP && (
-              <span className="text-[11px] font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2.5 py-1 rounded-full uppercase">AP Course</span>
-            )}
-            <button 
-              onClick={() => setIsEditingCourse(true)}
-              className="p-2 text-[#8B95A1] hover:bg-[#F2F4F6] dark:hover:bg-[#2C2C34] rounded-full transition-colors flex items-center justify-center"
-            >
-              <Settings size={20} />
-            </button>
-          </div>
+          <button 
+            onClick={() => setIsEditingCourse(true)}
+            className="p-2 text-[#8B95A1] hover:bg-[#F2F4F6] dark:hover:bg-[#2C2C34] rounded-full transition-colors flex items-center justify-center"
+          >
+            <Settings size={20} />
+          </button>
         </div>
         <div 
           onClick={() => setIsEditingCourse(true)}
