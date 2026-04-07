@@ -553,12 +553,12 @@ function CurrentTermView({
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col items-center justify-center min-w-[64px]">
                         <div className="text-2xl font-black text-[#3182F6] leading-none mb-1.5">{letterGrade}</div>
                         <div className="text-[12px] text-[#8B95A1] font-bold">{percentage.toFixed(1)}%</div>
                       </div>
-                      <ChevronRight size={22} className="text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors" />
+                      <ChevronRight size={22} className="text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors shrink-0" />
                     </div>
                   </motion.div>
                 </Reorder.Item>
