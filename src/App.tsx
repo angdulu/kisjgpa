@@ -1396,7 +1396,7 @@ function QuickGPAView() {
 
         <button 
           onClick={clearAll}
-          className="w-full py-5 bg-[#F2F4F6] dark:bg-[#2C2C34] text-[#8B95A1] font-bold rounded-2xl hover:bg-[#E5E8EB] dark:hover:bg-[#333D4B] transition-colors flex items-center justify-center gap-2"
+          className="w-full py-5 bg-red-50 dark:bg-red-900/10 text-red-500 font-bold rounded-2xl hover:bg-red-100 dark:hover:bg-red-900/20 transition-all flex items-center justify-center gap-2"
         >
           <Trash2 size={20} />
           Clear All Counts
