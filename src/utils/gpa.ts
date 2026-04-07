@@ -11,9 +11,9 @@ import { Course, GRADE_SCALE, Grade, Assessment } from '../types';
 export function calculateCurrentPercentage(course: Course): number {
   const assessments = course.assessments;
   
-  const formative = assessments.filter(a => a.type === 'Formative');
-  const summative = assessments.filter(a => a.type === 'Summative');
-  const final = assessments.filter(a => a.type === 'Final');
+  const formative = assessments.filter(a => a.type === 'Formative' && a.enabled !== false);
+  const summative = assessments.filter(a => a.type === 'Summative' && a.enabled !== false);
+  const final = assessments.filter(a => a.type === 'Final' && a.enabled !== false);
 
   const hasFinalMode = course.hasFinal;
   
@@ -84,9 +84,9 @@ export function calculateNextScoreNeeded(course: Course, targetGrade: Grade): { 
   const targetScore = targetScale.minScore;
 
   const assessments = course.assessments;
-  const formative = assessments.filter(a => a.type === 'Formative');
-  const summative = assessments.filter(a => a.type === 'Summative');
-  const final = assessments.filter(a => a.type === 'Final');
+  const formative = assessments.filter(a => a.type === 'Formative' && a.enabled !== false);
+  const summative = assessments.filter(a => a.type === 'Summative' && a.enabled !== false);
+  const final = assessments.filter(a => a.type === 'Final' && a.enabled !== false);
 
   const hasFinal = final.length > 0;
   const weights = hasFinal 
@@ -128,4 +128,23 @@ export function calculateNextScoreNeeded(course: Course, targetGrade: Grade): { 
   }
   
   return { score: Math.max(0, Math.ceil(x * 10) / 10) };
+}
+
+/**
+ * Calculates GPA from a list of grade counts (e.g., A: 5, B: 2)
+ */
+export function calculateSemesterGPA(gradeCounts: { grade: Grade, count: number }[]): number {
+  let totalPoints = 0;
+  let totalCount = 0;
+
+  for (const gc of gradeCounts) {
+    const scale = GRADE_SCALE.find(s => s.grade === gc.grade);
+    if (scale) {
+      totalPoints += scale.gpa * gc.count;
+      totalCount += gc.count;
+    }
+  }
+
+  if (totalCount === 0) return 0;
+  return totalPoints / totalCount;
 }

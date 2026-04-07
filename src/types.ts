@@ -29,6 +29,7 @@ export interface Assessment {
   type: AssessmentType;
   score: number;
   memo: string;
+  enabled?: boolean;
 }
 
 export interface Course {
@@ -39,4 +40,17 @@ export interface Course {
   assessments: Assessment[];
   targetGrade?: Grade;
   credit: number;
+}
+
+export interface SemesterGradeCount {
+  grade: Grade;
+  count: number;
+}
+
+export interface SemesterGPA {
+  id: string;
+  label: string; // e.g., "9th Grade"
+  semester: string; // e.g., "1st Semester"
+  gpa: number;
+  gradeCounts?: SemesterGradeCount[]; // Optional: for the "Calculate from Grades" feature
 }
