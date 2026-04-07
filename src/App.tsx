@@ -548,7 +548,7 @@ function CurrentTermView({
                       <GripVertical size={20} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
                       <div className="flex flex-col gap-0.5">
                         {course.isAP && (
-                          <span className="text-[10px] font-black text-orange-500 dark:text-orange-400 uppercase tracking-widest leading-none mb-0.5">AP Course</span>
+                          <span className="text-[10px] font-black text-orange-500 dark:text-orange-400 uppercase tracking-[0.15em] leading-none mb-0.5">AP</span>
                         )}
                         <span className="font-bold text-xl leading-tight dark:text-[#F9FAFB]">{course.name}</span>
                       </div>
@@ -630,7 +630,7 @@ function CourseDetail({
       <div className="text-center space-y-3 relative">
         <div className="flex flex-col items-center justify-center gap-1.5">
           {course.isAP && (
-            <span className="text-[11px] font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2.5 py-1 rounded-full uppercase">AP Course</span>
+            <span className="text-[11px] font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2.5 py-1 rounded-full uppercase">AP</span>
           )}
           <h2 className="text-4xl font-extrabold tracking-tight dark:text-[#F9FAFB] leading-tight px-4">{course.name}</h2>
           <button 
