@@ -252,16 +252,19 @@ export default function App() {
   const displayGPA = activeTab === 'current' ? overallGPA : (activeTab === 'cumulative' ? cumulativeGPAVal : "Quick");
 
   return (
-    <div className="min-h-[100dvh] bg-white dark:bg-[#111111] text-[#191F28] dark:text-[#F9FAFB] font-sans selection:bg-blue-100 dark:selection:bg-blue-900 transition-colors duration-300">
-      <div className="w-full max-w-md mx-auto bg-white dark:bg-[#111111] min-h-[100dvh] relative overflow-hidden flex flex-col pb-[env(safe-area-inset-bottom)]">
+    <div className="app-shell font-sans">
+      <div className="app-frame">
+        <div className="ambient-orb left-[-4rem] top-[-3rem] h-40 w-40 bg-slate-900/5 dark:bg-white/3" />
+        <div className="ambient-orb right-[-3rem] top-28 h-32 w-32 bg-slate-900/4 dark:bg-white/2" />
+        <div className="ambient-orb bottom-24 left-[-2rem] h-32 w-32 bg-slate-900/5 dark:bg-white/3" />
         
         {/* Header */}
-        <header className="sticky top-0 z-20 bg-white/80 dark:bg-[#111111]/80 backdrop-blur-md px-6 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-5 flex items-center justify-between border-b border-[#F2F4F6] dark:border-[#2C2C34]">
+        <header className="glass-header px-6 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-5 flex items-center justify-between">
           {selectedCourseId ? (
             <div className="flex items-center justify-between w-full">
               <button 
                 onClick={() => setSelectedCourseId(null)}
-                className="p-3 -ml-2 hover:bg-[#F2F4F6] dark:hover:bg-[#2C2C34] rounded-full transition-colors"
+                className="icon-button h-11 w-11 -ml-1 text-[#64748B] dark:text-[#CBD5E1]"
               >
                 <ArrowLeft size={28} />
               </button>
@@ -273,31 +276,34 @@ export default function App() {
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2 -ml-2 hover:bg-[#F2F4F6] dark:hover:bg-[#2C2C34] rounded-xl transition-colors"
+                className="icon-button h-11 w-11 -ml-1 text-[#64748B] dark:text-[#CBD5E1]"
               >
                 <Menu size={28} />
               </button>
-              <h1 className="text-xl font-bold tracking-tight">KISJ GPA</h1>
+              <div className="flex flex-col">
+                <span className="section-kicker">Academic Planner</span>
+                <h1 className="text-xl font-extrabold tracking-tight">KISJ GPA</h1>
+              </div>
             </div>
           )}
           {!selectedCourseId && (
             <div className="flex items-center gap-5">
-              <div className="flex items-center bg-[#F2F4F6] dark:bg-[#202027] p-1.5 rounded-xl">
+              <div className="segmented-shell flex items-center">
                 <button 
                   onClick={() => setIsWeighted(false)}
-                  className={`px-4 py-2 text-[12px] font-bold rounded-lg transition-all ${!isWeighted ? 'bg-white dark:bg-[#333D4B] text-[#3182F6] dark:text-white shadow-sm' : 'text-[#8B95A1]'}`}
+                  className={`segmented-option ${!isWeighted ? 'segmented-option-active' : ''}`}
                 >
                   UW
                 </button>
                 <button 
                   onClick={() => setIsWeighted(true)}
-                  className={`px-4 py-2 text-[12px] font-bold rounded-lg transition-all ${isWeighted ? 'bg-white dark:bg-[#333D4B] text-[#3182F6] dark:text-white shadow-sm' : 'text-[#8B95A1]'}`}
+                  className={`segmented-option ${isWeighted ? 'segmented-option-active' : ''}`}
                 >
                   W
                 </button>
               </div>
               <div className="text-right">
-                <div className="text-[12px] text-[#8B95A1] font-bold uppercase tracking-widest">
+                <div className="section-kicker">
                   {activeTab === 'current' ? 'GPA' : 'CGPA'}
                 </div>
                 <div className="text-2xl font-black text-[#3182F6]">{displayGPA}</div>
@@ -339,8 +345,8 @@ export default function App() {
         </main>
 
         {!selectedCourseId && (
-          <div className="px-6 py-5 bg-white dark:bg-[#111111] border-t border-[#F2F4F6] dark:border-[#2C2C34] z-10">
-            <div className="bg-[#F9FAFB] dark:bg-[#202027] p-4 rounded-2xl border border-[#F2F4F6] dark:border-[#2C2C34] flex items-center justify-between gap-4">
+          <div className="px-6 py-5 z-10">
+            <div className="surface-card-muted p-4 rounded-[26px] flex items-center justify-between gap-4">
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2 text-[#3182F6]">
                   <ShieldCheck size={18} />
@@ -349,9 +355,9 @@ export default function App() {
                 <p className="text-[11px] text-[#8B95A1] leading-relaxed">Data is stored only on your device.</p>
               </div>
             </div>
-            <footer className="mt-4 flex items-center justify-center gap-4 text-[11px] text-[#B0B8C1] dark:text-[#4E5968]">
+            <footer className="mt-4 flex items-center justify-center gap-4 text-[11px] text-[#94A3B8] dark:text-[#64748B]">
               <span>KISJ Guidelines</span>
-              <span className="w-px h-3 bg-[#F2F4F6] dark:bg-[#2C2C34]" />
+              <span className="w-px h-3 bg-slate-200/70 dark:bg-white/10" />
               <a href="mailto:jwookim27@kis.ac" className="text-[#3182F6] font-bold hover:underline">Support</a>
             </footer>
           </div>
@@ -365,7 +371,7 @@ export default function App() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsAddingCourse(true)}
-            className="absolute bottom-[150px] right-6 w-16 h-16 bg-[#3182F6] text-white rounded-full shadow-lg flex items-center justify-center z-30"
+            className="primary-button absolute bottom-[150px] right-6 z-30 flex h-16 w-16 items-center justify-center rounded-full text-white"
           >
             <Plus size={32} />
           </motion.button>
@@ -433,16 +439,16 @@ function Sidebar({
         animate={{ x: 0 }}
         exit={{ x: '-100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed inset-y-0 left-0 z-[70] w-72 bg-white dark:bg-[#111111] shadow-2xl p-6 flex flex-col"
+        className="fixed inset-y-0 left-0 z-[70] flex w-72 flex-col p-6 sidebar-panel surface-card-strong border-r border-white/20"
       >
         <div className="flex items-center justify-between mb-10">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-[#3182F6] rounded-lg flex items-center justify-center">
+            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#3B82F6_0%,#2563EB_100%)] text-white shadow-lg shadow-blue-500/20">
               <GraduationCap size={18} className="text-white" />
             </div>
             <span className="font-bold text-lg">Menu</span>
           </div>
-          <button onClick={onClose} className="p-2 -mr-2 hover:bg-[#F2F4F6] dark:hover:bg-[#2C2C34] rounded-full">
+          <button onClick={onClose} className="icon-button h-10 w-10 -mr-1 text-[#64748B] dark:text-[#CBD5E1]">
             <X size={24} />
           </button>
         </div>
@@ -468,7 +474,7 @@ function Sidebar({
           />
         </nav>
 
-        <div className="pt-6 border-t border-[#F2F4F6] dark:border-[#2C2C34] space-y-2">
+        <div className="pt-6 border-t border-slate-200/70 dark:border-white/8 space-y-2">
           <SidebarItem 
             icon={<Settings size={20} />} 
             label="Settings" 
@@ -476,7 +482,7 @@ function Sidebar({
           />
           <button 
             onClick={onReset}
-            className="w-full p-4 flex items-center gap-4 text-red-500 font-bold hover:bg-red-50 dark:hover:bg-red-950/20 rounded-2xl transition-all"
+            className="danger-button w-full p-4 flex items-center gap-4"
           >
             <Trash2 size={20} />
             Reset All Data
@@ -498,8 +504,8 @@ function SidebarItem({ icon, label, isActive, onClick }: {
       onClick={onClick}
       className={`w-full p-4 flex items-center gap-4 rounded-2xl transition-all ${
         isActive 
-          ? 'bg-blue-50 dark:bg-blue-900/20 text-[#3182F6]' 
-          : 'text-[#8B95A1] hover:bg-[#F2F4F6] dark:hover:bg-[#202027]'
+          ? 'surface-card text-[#3182F6] shadow-sm' 
+          : 'text-[#8B95A1] hover:bg-white/70 dark:hover:bg-white/5'
       }`}
     >
       <div className={isActive ? 'text-[#3182F6]' : 'text-[#B0B8C1]'}>
@@ -542,7 +548,7 @@ function CurrentTermView({
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={() => onSelectCourse(course.id)}
-                    className="bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] p-5 rounded-2xl cursor-pointer flex items-center justify-between group transition-all hover:shadow-sm"
+                    className="surface-card-strong p-5 rounded-[28px] cursor-pointer flex items-center justify-between group transition-all hover:-translate-y-0.5"
                   >
                     <div className="flex items-center gap-3">
                       <GripVertical size={20} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
@@ -566,7 +572,7 @@ function CurrentTermView({
             })}
           </Reorder.Group>
           {courses.length === 0 && (
-            <div className="text-center py-12 text-[#8B95A1]">
+            <div className="surface-card-muted rounded-[30px] text-center py-12 text-[#8B95A1]">
               <Calculator size={48} className="mx-auto mb-4 opacity-20" />
               <p>No courses added yet.</p>
               <p className="text-sm">Tap the + button to start.</p>
@@ -627,7 +633,7 @@ function CourseDetail({
       className="space-y-8"
     >
       {/* Summary Card */}
-      <div className="text-center space-y-3 relative">
+      <div className="surface-card-muted rounded-[32px] px-5 py-8 text-center space-y-3 relative">
         <div className="flex flex-col items-center justify-center gap-1.5">
           {course.isAP && (
             <span className="text-[11px] font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2.5 py-1 rounded-full uppercase">AP</span>
@@ -635,7 +641,7 @@ function CourseDetail({
           <h2 className="text-4xl font-extrabold tracking-tight dark:text-[#F9FAFB] leading-tight px-4">{course.name}</h2>
           <button 
             onClick={() => setIsEditingCourse(true)}
-            className="p-2 text-[#8B95A1] hover:bg-[#F2F4F6] dark:hover:bg-[#2C2C34] rounded-full transition-colors flex items-center justify-center"
+            className="icon-button h-10 w-10 text-[#8B95A1] flex items-center justify-center"
           >
             <Settings size={20} />
           </button>
@@ -650,7 +656,7 @@ function CourseDetail({
       </div>
 
       {/* Grade Gauge */}
-      <div className="bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] p-6 rounded-3xl space-y-5 shadow-sm">
+      <div className="surface-card-strong p-6 rounded-[32px] space-y-5">
         <div className="flex justify-between items-center">
           <div>
             <p className="text-[11px] text-[#8B95A1] font-bold uppercase tracking-wider mb-1">Current Grade</p>
@@ -692,7 +698,7 @@ function CourseDetail({
         ) : (
           <div 
             onClick={() => setIsEditingCourse(true)}
-            className="py-3 border-2 border-dashed border-[#F2F4F6] dark:border-[#2C2C34] rounded-2xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-[#F9FAFB] dark:hover:bg-[#2C2C34] transition-colors"
+            className="surface-card-muted py-4 rounded-[24px] flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-white/80 dark:hover:bg-white/5 transition-colors border-2 border-dashed border-slate-200/80 dark:border-white/8"
           >
             <Target size={20} className="text-[#B0B8C1]" />
             <p className="text-[12px] font-bold text-[#8B95A1]">Tap to set your target grade</p>
@@ -701,7 +707,7 @@ function CourseDetail({
       </div>
 
       {/* Final Exam Mode Toggle */}
-      <div className="flex items-center justify-between p-5 bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] rounded-2xl">
+      <div className="surface-card p-5 rounded-[28px] flex items-center justify-between">
         <div className="flex flex-col">
           <span className="font-bold text-[#191F28] dark:text-[#F9FAFB]">Final Exam Mode</span>
           <span className="text-xs text-[#8B95A1]">60/20/20 Weighting Ratio</span>
@@ -741,7 +747,7 @@ function CourseDetail({
                 {!isFinalDisabled && (
                   <button 
                     onClick={() => setIsAddingAssessment(type)}
-                    className="w-6 h-6 bg-[#F2F4F6] dark:bg-[#2D3540] text-[#3182F6] rounded-full flex items-center justify-center hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                    className="icon-button h-8 w-8 text-[#3182F6]"
                   >
                     <Plus size={16} />
                   </button>
@@ -755,7 +761,7 @@ function CourseDetail({
                   const otherTypes = course.assessments.filter(a => a.type !== type);
                   onUpdateCourse({ ...course, assessments: [...otherTypes, ...newList] });
                 }}
-                className="bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] rounded-3xl overflow-hidden divide-y divide-[#F2F4F6] dark:divide-[#2C2C34]"
+                className="surface-card rounded-[30px] overflow-hidden divide-y divide-slate-200/70 dark:divide-white/8"
               >
                 {list.map(a => (
                   <Reorder.Item
@@ -764,11 +770,11 @@ function CourseDetail({
                   >
                     <div 
                       onClick={() => !isFinalDisabled && setEditingAssessment(a)}
-                      className={`p-4 flex items-center justify-between hover:bg-[#F9FAFB] dark:hover:bg-[#2C2C34] transition-colors group cursor-pointer ${a.enabled === false ? 'opacity-80 bg-[#fbfbfb11]' : ''}`}
+                      className={`p-4 flex items-center justify-between hover:bg-white/70 dark:hover:bg-white/4 transition-colors group cursor-pointer ${a.enabled === false ? 'opacity-80 bg-[#fbfbfb11]' : ''}`}
                     >
                       <div className="flex items-center gap-3">
                         <GripVertical size={18} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
-                        <div className="w-10 h-10 bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-xl flex items-center justify-center text-[#8B95A1]">
+                        <div className="surface-card-muted w-10 h-10 rounded-xl flex items-center justify-center text-[#8B95A1]">
                           <FileText size={20} />
                         </div>
                         <div className="flex items-center">
@@ -807,7 +813,7 @@ function CourseDetail({
                 ))}
               </Reorder.Group>
               {list.length === 0 && (
-                  <div className="p-8 text-center text-[#B0B8C1] text-sm font-medium italic">
+                  <div className="surface-card-muted rounded-[26px] p-8 text-center text-[#8B95A1] text-base font-semibold leading-relaxed">
                     {isFinalDisabled ? 'Enable Final Exam Mode to add scores.' : `No ${type.toLowerCase()} scores yet.`}
                   </div>
                 )}
@@ -818,7 +824,7 @@ function CourseDetail({
 
       <button 
         onClick={() => setIsConfirmingDelete(true)}
-        className="w-full py-4 text-red-500 font-bold flex items-center justify-center gap-2 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-2xl transition-colors"
+        className="danger-button w-full py-4 flex items-center justify-center gap-2"
       >
         <Trash2 size={20} />
         Delete Course
@@ -965,7 +971,7 @@ function AddAssessmentModal({
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-sm bg-white dark:bg-[#111111] rounded-[32px] p-8 space-y-6"
+        className="modal-panel space-y-6"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center">
@@ -973,7 +979,7 @@ function AddAssessmentModal({
           {onDelete && (
             <button 
               onClick={onDelete}
-              className="p-2 text-[#8B95A1] hover:text-red-500 transition-colors"
+              className="icon-button h-10 w-10 text-[#8B95A1] hover:text-red-500 transition-colors"
             >
               <Trash2 size={20} />
             </button>
@@ -997,8 +1003,8 @@ function AddAssessmentModal({
               animate={isError ? { x: [-10, 10, -10, 10, -10, 10, 0] } : {}}
               transition={{ duration: 0.5, ease: "easeInOut" }}
               placeholder="0-100"
-              className={`w-full p-5 bg-[#F2F4F6] dark:bg-[#202027] dark:text-[#F9FAFB] rounded-2xl outline-none transition-all font-bold text-lg border-2 ${
-                isError ? 'border-[#FF3B30] bg-[#FFF5F5] dark:bg-red-950/30' : 'border-transparent focus:ring-2 focus:ring-[#3182F6]'
+              className={`field-input w-full p-5 dark:text-[#F9FAFB] font-bold text-lg border-2 ${
+                isError ? 'border-[#FF3B30] bg-[#FFF5F5] dark:bg-red-950/30' : 'border-transparent'
               }`}
             />
           </div>
@@ -1009,20 +1015,20 @@ function AddAssessmentModal({
               value={memo}
               onChange={e => setMemo(e.target.value)}
               placeholder="Assessment"
-              className="w-full p-5 bg-[#F2F4F6] dark:bg-[#202027] dark:text-[#F9FAFB] rounded-2xl outline-none focus:ring-2 focus:ring-[#3182F6] transition-all text-lg"
+              className="field-input w-full p-5 dark:text-[#F9FAFB] text-lg"
             />
           </div>
           <div className="flex gap-4 pt-2">
             <button 
               type="button"
               onClick={onClose}
-              className="flex-1 py-5 bg-[#F2F4F6] dark:bg-[#202027] text-[#8B95A1] font-bold rounded-2xl text-lg"
+              className="secondary-button flex-1 py-5 text-lg"
             >
               Cancel
             </button>
             <button 
               type="submit"
-              className="flex-1 py-5 bg-[#3182F6] text-white font-bold rounded-2xl text-lg"
+              className="primary-button flex-1 py-5 text-lg"
             >
               {initialAssessment ? 'Save' : 'Add'}
             </button>
@@ -1141,10 +1147,10 @@ function AddCourseModal({
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="w-full max-w-md bg-white dark:bg-[#111111] rounded-t-[32px] p-8 space-y-8"
+        className="sheet-panel space-y-8"
         onClick={(e) => { e.stopPropagation(); setShowSuggestions(false); }}
       >
-        <div className="w-12 h-1.5 bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-full mx-auto mb-2" />
+        <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-slate-200 dark:bg-white/10" />
         
         <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">{initialCourse ? 'Edit Course' : 'Add New Course'}</h2>
 
@@ -1162,8 +1168,8 @@ function AddCourseModal({
               transition={{ duration: 0.6, ease: "easeInOut" }}
               placeholder="e.g. AP World History"
               onClick={e => { e.stopPropagation(); setShowSuggestions(true); }}
-              className={`w-full p-5 bg-[#F2F4F6] dark:bg-[#202027] dark:text-[#F9FAFB] rounded-2xl outline-none transition-all border-2 text-lg ${
-                isError ? 'border-[#FF3B30] bg-[#FFF5F5] dark:bg-red-950/30' : 'border-transparent focus:ring-2 focus:ring-[#3182F6]'
+              className={`field-input w-full p-5 dark:text-[#F9FAFB] transition-all border-2 text-lg ${
+                isError ? 'border-[#FF3B30] bg-[#FFF5F5] dark:bg-red-950/30' : 'border-transparent'
               }`}
             />
             
@@ -1174,7 +1180,7 @@ function AddCourseModal({
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="absolute left-0 right-0 top-[calc(100%+8px)] bg-white dark:bg-[#2C2C34] border-2 border-[#E5E8EB] dark:border-[#333D4B] rounded-2xl shadow-2xl z-50 overflow-y-auto max-h-56 custom-scrollbar divide-y divide-[#F2F4F6] dark:divide-[#2C2C34] backdrop-blur-md"
+                  className="absolute left-0 right-0 top-[calc(100%+8px)] surface-card-strong rounded-2xl z-50 overflow-y-auto max-h-56 custom-scrollbar divide-y divide-slate-200/70 dark:divide-white/8 backdrop-blur-md"
                   onClick={e => e.stopPropagation()}
                 >
                   {suggestions.map((s, i) => (
@@ -1185,9 +1191,9 @@ function AddCourseModal({
                       className="w-full p-3.5 text-left hover:bg-[#F2F4F6] dark:hover:bg-[#2C2C34] transition-colors font-bold text-sm flex items-center justify-between group"
                     >
                       <span className="dark:text-[#F9FAFB]">{s}</span>
-                      <div className="w-8 h-8 bg-[#F2F4F6] dark:bg-[#333D4B] rounded-lg flex items-center justify-center transition-colors group-hover:bg-[#3182F6] group-hover:text-white">
-                        <ChevronRight size={18} />
-                      </div>
+                          <div className="surface-card-muted w-8 h-8 rounded-lg flex items-center justify-center transition-colors group-hover:bg-[#3182F6] group-hover:text-white">
+                            <ChevronRight size={18} />
+                          </div>
                     </button>
                   ))}
                 </motion.div>
@@ -1195,7 +1201,7 @@ function AddCourseModal({
             </AnimatePresence>
           </div>
 
-          <div className="flex items-center justify-between p-5 bg-[#F2F4F6] dark:bg-[#202027] rounded-2xl">
+          <div className="surface-card-muted flex items-center justify-between p-5 rounded-[26px]">
             <div className="flex flex-col gap-1">
               <span className="font-bold text-lg dark:text-[#F9FAFB]">AP Weighting</span>
               <span className="text-sm text-[#8B95A1]">Enable +1.0 point extra value</span>
@@ -1203,7 +1209,7 @@ function AddCourseModal({
             <button 
               type="button"
               onClick={() => setIsAP(!isAP)}
-              className={`w-14 h-7 rounded-full transition-colors relative ${isAP ? 'bg-[#3182F6]' : 'bg-[#B0B8C1] dark:bg-[#333D4B]'}`}
+                className={`w-14 h-7 rounded-full transition-colors relative ${isAP ? 'bg-[#3182F6]' : 'bg-[#B0B8C1] dark:bg-[#334155]'}`}
             >
               <motion.div 
                 animate={{ x: isAP ? 28 : 2 }}
@@ -1218,7 +1224,7 @@ function AddCourseModal({
               <select 
                 value={targetGrade || ''}
                 onChange={e => setTargetGrade((e.target.value as Grade) || undefined)}
-                className="w-full p-5 bg-[#F2F4F6] dark:bg-[#202027] dark:text-[#F9FAFB] rounded-2xl outline-none font-bold appearance-none cursor-pointer pr-12 text-lg"
+                className="field-input w-full p-5 dark:text-[#F9FAFB] font-bold appearance-none cursor-pointer pr-12 text-lg"
               >
                 <option value="">Not Set</option>
                 {GRADE_SCALE.map(s => (
@@ -1244,7 +1250,7 @@ function AddCourseModal({
                 animate={{ opacity: 1, height: "auto" }}
                 className="space-y-4 pt-2"
               >
-                <div className="flex items-center justify-between p-5 bg-[#F2F4F6] dark:bg-[#202027] rounded-2xl">
+                <div className="surface-card-muted flex items-center justify-between p-5 rounded-[26px]">
                   <div className="flex flex-col gap-1">
                     <span className="font-bold text-lg dark:text-[#F9FAFB]">Credits</span>
                     <span className="text-sm text-[#8B95A1]">
@@ -1255,14 +1261,14 @@ function AddCourseModal({
                     <button 
                       type="button"
                       onClick={() => setCredit(0.5)}
-                      className={`px-4 py-2 rounded-xl font-bold transition-all ${credit === 0.5 ? 'bg-[#3182F6] text-white shadow-md' : 'bg-white dark:bg-[#333D4B] text-[#8B95A1]'}`}
+                      className={`px-4 py-2 rounded-xl font-bold transition-all ${credit === 0.5 ? 'bg-[#3182F6] text-white shadow-md' : 'surface-card text-[#8B95A1]'}`}
                     >
                       0.5
                     </button>
                     <button 
                       type="button"
                       onClick={() => setCredit(1.0)}
-                      className={`px-4 py-2 rounded-xl font-bold transition-all ${credit === 1.0 ? 'bg-[#3182F6] text-white shadow-md' : 'bg-white dark:bg-[#333D4B] text-[#8B95A1]'}`}
+                      className={`px-4 py-2 rounded-xl font-bold transition-all ${credit === 1.0 ? 'bg-[#3182F6] text-white shadow-md' : 'surface-card text-[#8B95A1]'}`}
                     >
                       1.0
                     </button>
@@ -1274,7 +1280,7 @@ function AddCourseModal({
 
           <button 
             type="submit"
-            className="w-full py-5 bg-[#3182F6] text-white font-bold rounded-2xl hover:bg-[#1B64DA] transition-colors text-xl"
+            className="primary-button w-full py-5 text-xl"
           >
             {initialCourse ? 'Save Changes' : 'Add Course'}
           </button>
@@ -1297,7 +1303,7 @@ function ResetModal({ onClose, onConfirm }: { onClose: () => void, onConfirm: ()
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        className="w-full max-w-sm bg-white dark:bg-[#111111] rounded-[32px] p-8 space-y-6 text-center"
+        className="modal-panel space-y-6 text-center"
         onClick={e => e.stopPropagation()}
       >
         <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mx-auto">
@@ -1314,13 +1320,13 @@ function ResetModal({ onClose, onConfirm }: { onClose: () => void, onConfirm: ()
         <div className="flex flex-col gap-4 pt-2">
           <button 
             onClick={onConfirm}
-            className="w-full py-5 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 transition-colors text-lg"
+            className="w-full py-5 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 transition-colors text-lg shadow-lg shadow-red-500/20"
           >
             Yes, Reset Everything
           </button>
           <button 
             onClick={onClose}
-            className="w-full py-5 bg-[#F2F4F6] dark:bg-[#202027] text-[#8B95A1] font-bold rounded-2xl hover:bg-[#E5E8EB] dark:hover:bg-[#2C2C34] transition-colors text-lg"
+            className="secondary-button w-full py-5 text-lg"
           >
             Cancel
           </button>
@@ -1334,8 +1340,16 @@ function QuickGPAView() {
   const [gradeCounts, setGradeCounts] = useState<SemesterGradeCount[]>(
     GRADE_SCALE.map(s => ({ grade: s.grade, count: 0 }))
   );
+  const [showLowerGrades, setShowLowerGrades] = useState(false);
 
   const calculatedGPA = useMemo(() => calculateSemesterGPA(gradeCounts), [gradeCounts]);
+
+  const priorityGrades: Grade[] = ['A+', 'A', 'A-', 'B+', 'B', 'B-'];
+  const lowerGrades: Grade[] = ['C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'];
+  const gradeMap = useMemo(
+    () => new Map(gradeCounts.map(gc => [gc.grade, gc])),
+    [gradeCounts]
+  );
 
   const handleUpdateCount = (grade: Grade, delta: number) => {
     setGradeCounts(prev => prev.map(gc => 
@@ -1347,6 +1361,46 @@ function QuickGPAView() {
     setGradeCounts(GRADE_SCALE.map(s => ({ grade: s.grade, count: 0 })));
   };
 
+  const renderGradeRow = (grade: Grade) => {
+    const count = gradeMap.get(grade)?.count ?? 0;
+    const isActive = count > 0;
+
+    return (
+      <div
+        key={grade}
+        className={`grade-row grid h-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center rounded-[20px] px-3 py-2.5 ${
+          isActive ? 'grade-row-active' : ''
+        }`}
+      >
+        <div className="flex min-w-0 items-center">
+          <div className="w-9 text-[15px] font-black tracking-[-0.02em] text-[#5F6977] dark:text-[#C8D0DD]">
+            {grade}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => handleUpdateCount(grade, -1)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EEF2F7] text-[#8B95A1] transition-colors hover:bg-[#E5E8EB] dark:bg-[#2C3440] dark:hover:bg-[#333D4B]"
+          >
+            <Minus size={14} />
+          </button>
+          <div className="min-w-[1.25rem] text-center text-[17px] font-black text-[#191F28] dark:text-[#F9FAFB]">
+            {count}
+          </div>
+          <button
+            type="button"
+            onClick={() => handleUpdateCount(grade, 1)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#3182F6] text-white shadow-sm transition-colors hover:bg-[#1B64DA]"
+          >
+            <Plus size={14} />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -1354,56 +1408,63 @@ function QuickGPAView() {
       exit={{ opacity: 0, x: -20 }}
       className="space-y-8"
     >
-      <section className="text-center space-y-2">
-        <h2 className="text-3xl font-bold dark:text-[#F9FAFB]">Quick GPA</h2>
-        <p className="text-[#8B95A1] font-medium">Instantly calculate your semester GPA</p>
+      <section className="text-center space-y-1.5">
+        <h2 className="text-2xl font-bold md:text-3xl dark:text-[#F9FAFB]">Quick GPA</h2>
+        <p className="text-sm md:text-base text-[#8B95A1] font-medium">Instantly calculate your semester GPA</p>
       </section>
 
-      <div className="bg-[#F9FAFB] dark:bg-[#1A1A21] p-8 rounded-[32px] border border-[#F2F4F6] dark:border-[#2C2C34] shadow-sm space-y-8">
-        <div className="text-center space-y-1">
-          <p className="text-[10px] text-[#8B95A1] font-bold uppercase tracking-[0.2em] opacity-80">Calculated GPA</p>
-          <p className="text-5xl font-black text-[#3182F6]">{calculatedGPA.toFixed(3)}</p>
+      <div className="surface-card p-5 md:p-8 rounded-[28px] md:rounded-[32px] space-y-5 md:space-y-8">
+        <div className="surface-card-strong space-y-3 rounded-[24px] px-5 py-4 md:space-y-5 md:rounded-[28px] md:px-6 md:py-6">
+          <div className="text-center space-y-0.5 md:space-y-1">
+            <p className="text-[10px] text-[#8B95A1] font-bold uppercase tracking-[0.2em] opacity-80">Calculated GPA</p>
+            <p className="text-4xl font-black text-[#3182F6] md:text-5xl">{calculatedGPA.toFixed(3)}</p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          {gradeCounts.map(gc => (
-            <div 
-              key={gc.grade} 
-              className="flex items-center justify-between bg-white dark:bg-[#1C1C24] py-3 px-4 rounded-[20px] border border-[#F2F4F6] dark:border-[#2C2C34] shadow-sm transform transition-all active:scale-[0.98]"
-            >
-              <span className="font-bold text-base dark:text-[#F9FAFB]">{gc.grade}</span>
-              
-              <div className="flex items-center gap-2.5">
-                <button 
-                  type="button"
-                  onClick={() => handleUpdateCount(gc.grade, -1)}
-                  className="w-8 h-8 flex items-center justify-center bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-xl text-[#8B95A1] hover:bg-[#E5E8EB] dark:hover:bg-[#333D4B] transition-colors"
-                >
-                  <Minus size={16} />
-                </button>
-                <span className="font-bold text-base min-w-[12px] text-center dark:text-[#F9FAFB]">{gc.count}</span>
-                <button 
-                  type="button"
-                  onClick={() => handleUpdateCount(gc.grade, 1)}
-                  className="w-8 h-8 flex items-center justify-center bg-[#3182F6] rounded-xl text-white hover:bg-[#1B64DA] transition-colors shadow-sm"
-                >
-                  <Plus size={16} />
-                </button>
-              </div>
-            </div>
-          ))}
+        <div className="grid grid-cols-2 auto-rows-fr items-stretch gap-2 md:gap-3">
+          {priorityGrades.map(renderGradeRow)}
+        </div>
+
+        <div className="space-y-2.5">
+          <button
+            type="button"
+            onClick={() => setShowLowerGrades(prev => !prev)}
+            className="grade-row flex w-full items-center justify-between gap-4 px-3 py-2.5 text-left"
+            aria-label={showLowerGrades ? 'Hide lower grades' : 'Show lower grades'}
+          >
+            <span className="text-sm font-bold text-[#8B95A1]">More grades</span>
+            <ChevronDown
+              size={20}
+              className={`shrink-0 text-[#8B95A1] transition-transform ${showLowerGrades ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          <AnimatePresence initial={false}>
+            {showLowerGrades && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="grid grid-cols-2 auto-rows-fr items-stretch gap-2 pt-2.5">
+                  {lowerGrades.map(renderGradeRow)}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <button 
           onClick={clearAll}
-          className="w-full py-5 bg-red-50 dark:bg-red-900/10 text-red-500 font-bold rounded-2xl hover:bg-red-100 dark:hover:bg-red-900/20 transition-all flex items-center justify-center gap-2"
+          className="danger-button w-full py-3.5 flex items-center justify-center gap-2"
         >
           <Trash2 size={20} />
           Clear All Counts
         </button>
       </div>
 
-      <div className="p-6 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/20">
+      <div className="surface-card-muted p-4 md:p-6 rounded-[24px] border border-blue-100/80 dark:border-blue-900/20">
         <div className="flex gap-3">
           <AlertCircle className="text-[#3182F6] shrink-0" size={20} />
           <p className="text-sm text-blue-900 dark:text-blue-200 leading-relaxed">
@@ -1449,12 +1510,10 @@ function CumulativeView({
         <Reorder.Group axis="y" values={semesters} onReorder={onReorder} className="grid gap-4">
           {semesters.map(s => (
             <Reorder.Item key={s.id} value={s}>
-              <div 
-                className="p-5 bg-white dark:bg-[#202027] border border-[#F2F4F6] dark:border-[#2C2C34] rounded-2xl flex items-center justify-between"
-              >
+              <div className="surface-card p-5 rounded-[28px] flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <GripVertical size={20} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
-                  <div className="w-12 h-12 bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-xl flex items-center justify-center text-[#3182F6]">
+                  <div className="surface-card-muted w-12 h-12 rounded-xl flex items-center justify-center text-[#3182F6]">
                     <BarChart3 size={24} />
                   </div>
                   <div>
@@ -1466,11 +1525,7 @@ function CumulativeView({
                   <div className="text-right">
                     <p className="text-2xl font-black text-[#3182F6]">{s.gpa.toFixed(3)}</p>
                   </div>
-                  <button 
-                    onClick={() => onDeleteSemester(s.id)}
-                    className="p-2 text-[#B0B8C1] hover:text-red-500 transition-colors"
-                    title="Delete"
-                  >
+                  <button onClick={() => onDeleteSemester(s.id)} className="icon-button h-10 w-10 text-[#B0B8C1] hover:text-red-500 transition-colors" title="Delete">
                     <Trash2 size={18} />
                   </button>
                 </div>
@@ -1480,7 +1535,7 @@ function CumulativeView({
         </Reorder.Group>
 
         {semesters.length === 0 && (
-          <div className="text-center py-12 text-[#8B95A1] border-2 border-dashed border-[#F2F4F6] dark:border-[#2C2C34] rounded-3xl">
+          <div className="surface-card-muted text-center py-12 text-[#8B95A1] border-2 border-dashed border-slate-200/80 dark:border-white/8 rounded-[30px]">
             <History size={48} className="mx-auto mb-4 opacity-20" />
             <p>No historical data yet.</p>
             <p className="text-sm">Add your past semesters to track progress.</p>
@@ -1489,7 +1544,7 @@ function CumulativeView({
 
         <button 
           onClick={() => setIsAdding(true)}
-          className="w-full py-5 bg-[#3182F6] text-white font-bold rounded-2xl shadow-lg shadow-blue-500/20 hover:bg-blue-600 transition-all flex items-center justify-center gap-3"
+          className="primary-button w-full py-5 flex items-center justify-center gap-3"
         >
           <Plus size={20} />
           Add Semester
@@ -1560,12 +1615,12 @@ function AddSemesterModal({
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        className="w-full max-w-sm bg-white dark:bg-[#111111] rounded-[32px] p-8 space-y-6 max-h-[90dvh] overflow-y-auto custom-scrollbar"
+        className="modal-panel space-y-6 max-h-[90dvh] overflow-y-auto custom-scrollbar"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">Add Semester</h2>
-          <button onClick={onClose} className="p-2 -mr-2 text-[#8B95A1] hover:bg-[#F2F4F6] dark:hover:bg-[#2C2C34] rounded-full">
+          <button onClick={onClose} className="icon-button h-10 w-10 -mr-1 text-[#8B95A1]">
             <X size={24} />
           </button>
         </div>
@@ -1577,7 +1632,7 @@ function AddSemesterModal({
               <select 
                 value={label}
                 onChange={e => setLabel(e.target.value)}
-                className="w-full p-4 bg-[#F2F4F6] dark:bg-[#202027] dark:text-[#F9FAFB] rounded-2xl outline-none font-bold"
+                className="field-input w-full p-4 dark:text-[#F9FAFB] font-bold"
               >
                 {['9th Grade', '10th Grade', '11th Grade', '12th Grade'].map(g => <option key={g} value={g}>{g}</option>)}
               </select>
@@ -1588,13 +1643,13 @@ function AddSemesterModal({
               <select 
                 value={semester}
                 onChange={e => setSemester(e.target.value)}
-                className="w-full p-4 bg-[#F2F4F6] dark:bg-[#202027] dark:text-[#F9FAFB] rounded-2xl outline-none font-bold"
+                className="field-input w-full p-4 dark:text-[#F9FAFB] font-bold"
               >
                   {['1st Semester', '2nd Semester'].map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
 
-            <div className="border-t border-[#F2F4F6] dark:border-[#2C2C34] pt-6 space-y-4">
+            <div className="border-t border-slate-200/80 dark:border-white/8 pt-6 space-y-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-bold dark:text-[#F9FAFB]">GPA Input Method</span>
                 <button 
@@ -1607,7 +1662,7 @@ function AddSemesterModal({
               </div>
 
               {isCalculatorOpen ? (
-                <div className="space-y-6 bg-[#F9FAFB] dark:bg-[#1A1A21] p-5 rounded-3xl border border-[#F2F4F6] dark:border-[#2C2C34]">
+                <div className="surface-card-muted space-y-6 p-5 rounded-[28px]">
                    <div className="text-center">
                     <p className="text-xs text-[#8B95A1] font-bold uppercase mb-1">Calculated GPA</p>
                     <p className="text-4xl font-black text-[#3182F6]">{calculatedGPA.toFixed(3)}</p>
@@ -1615,13 +1670,13 @@ function AddSemesterModal({
                   
                   <div className="grid grid-cols-2 gap-3">
                     {gradeCounts.map(gc => (
-                      <div key={gc.grade} className="flex items-center justify-between bg-white dark:bg-[#202027] p-3 rounded-2xl border border-[#F2F4F6] dark:border-[#2C2C34]">
+                      <div key={gc.grade} className="surface-card flex items-center justify-between p-3 rounded-2xl">
                         <span className="font-black text-sm dark:text-[#F9FAFB]">{gc.grade}</span>
                         <div className="flex items-center gap-3">
                           <button 
                             type="button"
                             onClick={() => handleUpdateCount(gc.grade, -1)}
-                            className="w-6 h-6 flex items-center justify-center bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-lg text-[#8B95A1]"
+                            className="surface-card-muted w-6 h-6 flex items-center justify-center rounded-lg text-[#8B95A1]"
                           >
                             -
                           </button>
@@ -1648,8 +1703,8 @@ function AddSemesterModal({
                     max="5"
                     value={gpa}
                     onChange={e => setGpa(e.target.value)}
-                    placeholder="e.g. 3.905"
-                    className="w-full p-5 bg-[#F2F4F6] dark:bg-[#202027] dark:text-[#F9FAFB] rounded-2xl outline-none font-bold text-lg focus:ring-2 focus:ring-[#3182F6] transition-all"
+                    placeholder="e.g. 3.5"
+                    className="field-input w-full p-5 dark:text-[#F9FAFB] font-bold text-lg"
                   />
                 </div>
               )}
@@ -1658,7 +1713,7 @@ function AddSemesterModal({
 
           <button 
             type="submit"
-            className="w-full py-5 bg-[#3182F6] text-white font-bold rounded-2xl shadow-lg hover:bg-blue-600 transition-all text-lg"
+            className="primary-button w-full py-5 text-lg"
           >
             Save Semester
           </button>
