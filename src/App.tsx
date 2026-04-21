@@ -1643,7 +1643,7 @@ function AddSemesterModal({
                   <label className="text-[12px] font-bold text-[#8B95A1] uppercase tracking-widest">Manual GPA</label>
                   <input 
                     type="number" 
-                    step="0.001"
+                    step="0.01"
                     min="0"
                     max="5"
                     value={gpa}
