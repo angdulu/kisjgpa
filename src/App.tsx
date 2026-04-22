@@ -990,7 +990,7 @@ function AddAssessmentModal({
             <label className="text-[12px] font-bold text-[#8B95A1] uppercase tracking-widest">Score (%)</label>
             <motion.input 
               autoFocus
-              type="number" 
+              type="text"
               inputMode="decimal"
               pattern="[0-9]*"
               step="any"
