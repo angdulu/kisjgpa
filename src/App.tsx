@@ -804,6 +804,7 @@ function CourseDetail({
                     </div>
                     <div className="flex items-center gap-3">
                       <button 
+                        onPointerDownCapture={(e) => e.stopPropagation()}
                         onClick={(e) => {
                           e.stopPropagation();
                           onUpdateAssessment({ ...a, enabled: a.enabled === false });
@@ -820,6 +821,7 @@ function CourseDetail({
                         <p className={`font-black text-lg transition-all ${a.enabled === false ? 'text-[#B0B8C1] line-through opacity-60' : 'dark:text-[#F9FAFB]'}`}>{a.score}%</p>
                       </div>
                       <button 
+                        onPointerDownCapture={(e) => e.stopPropagation()}
                         onClick={(e) => {
                           e.stopPropagation();
                           onDeleteAssessment(a.id);
