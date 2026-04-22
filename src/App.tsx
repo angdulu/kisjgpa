@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo, FormEvent, useEffect } from 'react';
+import React, { useState, useMemo, FormEvent, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
 import { 
   Minus,
@@ -525,6 +525,8 @@ function CurrentTermView({
   onSelectCourse: (id: string) => void,
   onReorder: (newCourses: Course[]) => void
 }) {
+  const isReorderingRef = useRef(false);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -545,7 +547,18 @@ function CurrentTermView({
                   value={course}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
-                  onTap={() => onSelectCourse(course.id)}
+                  onDragStart={() => {
+                    isReorderingRef.current = true;
+                  }}
+                  onDragEnd={() => {
+                    window.setTimeout(() => {
+                      isReorderingRef.current = false;
+                    }, 0);
+                  }}
+                  onTap={() => {
+                    if (isReorderingRef.current) return;
+                    onSelectCourse(course.id);
+                  }}
                   className="surface-card-strong p-5 rounded-[28px] cursor-pointer flex items-center justify-between group transition-all hover:-translate-y-0.5"
                 >
                   <div className="flex items-center gap-3">
@@ -611,6 +624,7 @@ function CourseDetail({
   const [editingAssessment, setEditingAssessment] = useState<Assessment | null>(null);
   const [isEditingCourse, setIsEditingCourse] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const isReorderingAssessmentsRef = useRef(false);
 
   const assessmentsByType = {
     Summative: course.assessments.filter(a => a.type === 'Summative'),
@@ -761,10 +775,21 @@ function CourseDetail({
                 className="surface-card rounded-[30px] overflow-hidden divide-y divide-slate-200/70 dark:divide-white/8"
               >
                 {list.map(a => (
-                  <Reorder.Item
+                <Reorder.Item
                     key={a.id}
                     value={a}
-                    onTap={() => !isFinalDisabled && setEditingAssessment(a)}
+                    onDragStart={() => {
+                      isReorderingAssessmentsRef.current = true;
+                    }}
+                    onDragEnd={() => {
+                      window.setTimeout(() => {
+                        isReorderingAssessmentsRef.current = false;
+                      }, 0);
+                    }}
+                    onTap={() => {
+                      if (isFinalDisabled || isReorderingAssessmentsRef.current) return;
+                      setEditingAssessment(a);
+                    }}
                     whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
                     className={`p-4 flex items-center justify-between transition-colors group cursor-pointer ${a.enabled === false ? 'opacity-80 bg-[#fbfbfb11]' : ''}`}
                   >
