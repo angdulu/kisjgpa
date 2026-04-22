@@ -543,30 +543,27 @@ function CurrentTermView({
                 <Reorder.Item
                   key={course.id}
                   value={course}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  onTap={() => onSelectCourse(course.id)}
+                  className="surface-card-strong p-5 rounded-[28px] cursor-pointer flex items-center justify-between group transition-all hover:-translate-y-0.5"
                 >
-                  <motion.div
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={() => onSelectCourse(course.id)}
-                    className="surface-card-strong p-5 rounded-[28px] cursor-pointer flex items-center justify-between group transition-all hover:-translate-y-0.5"
-                  >
-                    <div className="flex items-center gap-3">
-                      <GripVertical size={20} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
-                      <div className="flex flex-col gap-0.5">
-                        {course.isAP && (
-                          <span className="text-[10px] font-black text-orange-500 dark:text-orange-400 uppercase tracking-[0.15em] leading-none mb-0.5">AP</span>
-                        )}
-                        <span className="font-bold text-xl leading-tight dark:text-[#F9FAFB]">{course.name}</span>
-                      </div>
+                  <div className="flex items-center gap-3">
+                    <GripVertical size={20} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
+                    <div className="flex flex-col gap-0.5">
+                      {course.isAP && (
+                        <span className="text-[10px] font-black text-orange-500 dark:text-orange-400 uppercase tracking-[0.15em] leading-none mb-0.5">AP</span>
+                      )}
+                      <span className="font-bold text-xl leading-tight dark:text-[#F9FAFB]">{course.name}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex flex-col items-center justify-center min-w-[64px]">
-                        <div className="text-2xl font-black text-[#3182F6] leading-none mb-1.5">{letterGrade}</div>
-                        <div className="text-[12px] text-[#8B95A1] font-bold">{percentage.toFixed(1)}%</div>
-                      </div>
-                      <ChevronRight size={22} className="text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors shrink-0" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex flex-col items-center justify-center min-w-[64px]">
+                      <div className="text-2xl font-black text-[#3182F6] leading-none mb-1.5">{letterGrade}</div>
+                      <div className="text-[12px] text-[#8B95A1] font-bold">{percentage.toFixed(1)}%</div>
                     </div>
-                  </motion.div>
+                    <ChevronRight size={22} className="text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors shrink-0" />
+                  </div>
                 </Reorder.Item>
               );
             })}
@@ -767,47 +764,45 @@ function CourseDetail({
                   <Reorder.Item
                     key={a.id}
                     value={a}
+                    onTap={() => !isFinalDisabled && setEditingAssessment(a)}
+                    whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+                    className={`p-4 flex items-center justify-between transition-colors group cursor-pointer ${a.enabled === false ? 'opacity-80 bg-[#fbfbfb11]' : ''}`}
                   >
-                    <div 
-                      onClick={() => !isFinalDisabled && setEditingAssessment(a)}
-                      className={`p-4 flex items-center justify-between hover:bg-white/70 dark:hover:bg-white/4 transition-colors group cursor-pointer ${a.enabled === false ? 'opacity-80 bg-[#fbfbfb11]' : ''}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <GripVertical size={18} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
-                        <div className="surface-card-muted w-10 h-10 rounded-xl flex items-center justify-center text-[#8B95A1]">
-                          <FileText size={20} />
-                        </div>
-                        <div className="flex items-center">
-                          <p className="font-bold text-sm dark:text-[#F9FAFB]">{a.memo}</p>
-                        </div>
+                    <div className="flex items-center gap-3">
+                      <GripVertical size={18} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
+                      <div className="surface-card-muted w-10 h-10 rounded-xl flex items-center justify-center text-[#8B95A1]">
+                        <FileText size={20} />
                       </div>
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onUpdateAssessment({ ...a, enabled: a.enabled === false });
-                          }}
-                          className={`w-9 h-5 rounded-full relative transition-all duration-200 ${a.enabled !== false ? 'bg-[#3182F6]' : 'bg-[#B0B8C1] dark:bg-[#333D4B]'}`}
-                        >
-                          <motion.div 
-                            animate={{ x: a.enabled !== false ? 18 : 2 }}
-                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                            className="absolute top-1 left-0 w-3 h-3 bg-white rounded-full shadow-sm"
-                          />
-                        </button>
-                        <div className="text-right min-w-[3.5rem]">
-                          <p className={`font-black text-lg transition-all ${a.enabled === false ? 'text-[#B0B8C1] line-through opacity-60' : 'dark:text-[#F9FAFB]'}`}>{a.score}%</p>
-                        </div>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeleteAssessment(a.id);
-                          }}
-                          className="p-2 text-[#B0B8C1] hover:text-red-500 opacity-40 group-hover:opacity-100 transition-all"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                      <div className="flex items-center">
+                        <p className="font-bold text-sm dark:text-[#F9FAFB]">{a.memo}</p>
                       </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onUpdateAssessment({ ...a, enabled: a.enabled === false });
+                        }}
+                        className={`w-9 h-5 rounded-full relative transition-all duration-200 ${a.enabled !== false ? 'bg-[#3182F6]' : 'bg-[#B0B8C1] dark:bg-[#333D4B]'}`}
+                      >
+                        <motion.div 
+                          animate={{ x: a.enabled !== false ? 18 : 2 }}
+                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                          className="absolute top-1 left-0 w-3 h-3 bg-white rounded-full shadow-sm"
+                        />
+                      </button>
+                      <div className="text-right min-w-[3.5rem]">
+                        <p className={`font-black text-lg transition-all ${a.enabled === false ? 'text-[#B0B8C1] line-through opacity-60' : 'dark:text-[#F9FAFB]'}`}>{a.score}%</p>
+                      </div>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteAssessment(a.id);
+                        }}
+                        className="p-2 text-[#B0B8C1] hover:text-red-500 opacity-40 group-hover:opacity-100 transition-all"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </Reorder.Item>
                 ))}
