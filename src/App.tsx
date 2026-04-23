@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo, FormEvent, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, Reorder } from 'motion/react';
+import { motion, AnimatePresence, Reorder, useDragControls } from 'motion/react';
 import { 
   Minus,
   Plus, 
@@ -516,6 +516,69 @@ function SidebarItem({ icon, label, isActive, onClick }: {
   );
 }
 
+function CourseReorderItem({
+  course,
+  onSelectCourse
+}: {
+  key?: React.Key,
+  course: Course,
+  onSelectCourse: (id: string) => void
+}) {
+  const percentage = calculateCurrentPercentage(course);
+  const letterGrade = getLetterGrade(percentage);
+  const dragControls = useDragControls();
+  const isReorderingRef = useRef(false);
+
+  return (
+    <Reorder.Item
+      value={course}
+      dragListener={false}
+      dragControls={dragControls}
+      whileDrag={{ scale: 1.02, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)" }}
+      onDragStart={() => {
+        isReorderingRef.current = true;
+      }}
+      onDragEnd={() => {
+        window.setTimeout(() => {
+          isReorderingRef.current = false;
+        }, 0);
+      }}
+      onTap={() => {
+        if (isReorderingRef.current) return;
+        onSelectCourse(course.id);
+      }}
+      className="surface-card-strong p-5 rounded-[28px] cursor-pointer flex items-center justify-between group select-none relative z-10"
+    >
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            dragControls.start(e);
+          }}
+          className="flex items-center justify-center p-2 -ml-2 text-[#B0B8C1] hover:text-[#3182F6] cursor-grab active:cursor-grabbing touch-none transition-colors"
+          aria-label="Reorder course"
+        >
+          <GripVertical size={20} />
+        </button>
+        <div className="flex flex-col gap-0.5">
+          {course.isAP && (
+            <span className="text-[10px] font-black text-orange-500 dark:text-orange-400 uppercase tracking-[0.15em] leading-none mb-0.5">AP</span>
+          )}
+          <span className="font-bold text-xl leading-tight dark:text-[#F9FAFB]">{course.name}</span>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="flex flex-col items-center justify-center min-w-[64px]">
+          <div className="text-2xl font-black text-[#3182F6] leading-none mb-1.5">{letterGrade}</div>
+          <div className="text-[12px] text-[#8B95A1] font-bold">{percentage.toFixed(1)}%</div>
+        </div>
+        <ChevronRight size={22} className="text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors shrink-0" />
+      </div>
+    </Reorder.Item>
+  );
+}
+
 function CurrentTermView({ 
   courses, 
   onSelectCourse,
@@ -525,8 +588,6 @@ function CurrentTermView({
   onSelectCourse: (id: string) => void,
   onReorder: (newCourses: Course[]) => void
 }) {
-  const isReorderingRef = useRef(false);
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -537,49 +598,9 @@ function CurrentTermView({
       <section>
         <div className="grid gap-3.5">
           <Reorder.Group axis="y" values={courses} onReorder={onReorder} className="grid gap-3.5">
-            {courses.map(course => {
-              const percentage = calculateCurrentPercentage(course);
-              const letterGrade = getLetterGrade(percentage);
-
-              return (
-                <Reorder.Item
-                  key={course.id}
-                  value={course}
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  onDragStart={() => {
-                    isReorderingRef.current = true;
-                  }}
-                  onDragEnd={() => {
-                    window.setTimeout(() => {
-                      isReorderingRef.current = false;
-                    }, 0);
-                  }}
-                  onTap={() => {
-                    if (isReorderingRef.current) return;
-                    onSelectCourse(course.id);
-                  }}
-                  className="surface-card-strong p-5 rounded-[28px] cursor-pointer flex items-center justify-between group transition-all hover:-translate-y-0.5"
-                >
-                  <div className="flex items-center gap-3">
-                    <GripVertical size={20} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
-                    <div className="flex flex-col gap-0.5">
-                      {course.isAP && (
-                        <span className="text-[10px] font-black text-orange-500 dark:text-orange-400 uppercase tracking-[0.15em] leading-none mb-0.5">AP</span>
-                      )}
-                      <span className="font-bold text-xl leading-tight dark:text-[#F9FAFB]">{course.name}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex flex-col items-center justify-center min-w-[64px]">
-                      <div className="text-2xl font-black text-[#3182F6] leading-none mb-1.5">{letterGrade}</div>
-                      <div className="text-[12px] text-[#8B95A1] font-bold">{percentage.toFixed(1)}%</div>
-                    </div>
-                    <ChevronRight size={22} className="text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors shrink-0" />
-                  </div>
-                </Reorder.Item>
-              );
-            })}
+            {courses.map(course => (
+              <CourseReorderItem key={course.id} course={course} onSelectCourse={onSelectCourse} />
+            ))}
           </Reorder.Group>
           {courses.length === 0 && (
             <div className="surface-card-muted rounded-[30px] text-center py-12 text-[#8B95A1]">
@@ -791,7 +812,7 @@ function CourseDetail({
                       setEditingAssessment(a);
                     }}
                     whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
-                    className={`p-4 flex items-center justify-between transition-colors group cursor-pointer ${a.enabled === false ? 'opacity-80 bg-[#fbfbfb11]' : ''}`}
+                    className={`p-4 flex items-center justify-between transition-colors group cursor-pointer select-none ${a.enabled === false ? 'opacity-80 bg-[#fbfbfb11]' : ''}`}
                   >
                     <div className="flex items-center gap-3">
                       <GripVertical size={18} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
