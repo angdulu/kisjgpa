@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useMemo, FormEvent, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, Reorder, useDragControls } from 'motion/react';
 import { 
   Minus,
@@ -875,7 +876,7 @@ function CourseDetail({
 
       {/* Confirmation Modal */}
       <AnimatePresence>
-        {isConfirmingDelete && (
+        {isConfirmingDelete && createPortal(
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -916,7 +917,8 @@ function CourseDetail({
                 </button>
               </div>
             </motion.div>
-          </motion.div>
+          </motion.div>,
+          document.body
         )}
       </AnimatePresence>
 
@@ -1002,22 +1004,22 @@ function AddAssessmentModal({
     });
   };
 
-  return (
+  return createPortal(
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-md p-6"
       onClick={onClose}
     >
       <motion.div 
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="modal-panel space-y-6"
+        initial={{ scale: 0.95, opacity: 0, y: 10 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 10 }}
+        className="modal-panel space-y-6 max-h-[90dvh] overflow-y-auto custom-scrollbar"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center sticky top-0 bg-transparent backdrop-blur-xl -mt-2 pt-2 z-10">
           <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">{initialAssessment ? 'Edit' : 'Add'} {type} Score</h2>
           {onDelete && (
             <button 
@@ -1078,7 +1080,8 @@ function AddAssessmentModal({
           </div>
         </form>
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body
   );
 }
 
@@ -1177,12 +1180,12 @@ function AddCourseModal({
     else if (onAdd) onAdd(courseData);
   };
 
-  return (
+  return createPortal(
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 backdrop-blur-md"
       onClick={onClose}
     >
       <motion.div 
@@ -1190,14 +1193,15 @@ function AddCourseModal({
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="sheet-panel space-y-8"
+        className="sheet-panel space-y-8 max-h-[90dvh] overflow-y-auto custom-scrollbar"
         onClick={(e) => { e.stopPropagation(); setShowSuggestions(false); }}
       >
-        <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-slate-200 dark:bg-white/10" />
-        
-        <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">{initialCourse ? 'Edit Course' : 'Add New Course'}</h2>
+        <div className="sticky top-0 bg-transparent backdrop-blur-xl z-20 -mt-2 pt-2">
+          <div className="mx-auto mb-6 h-1.5 w-12 rounded-full bg-slate-200 dark:bg-white/10" />
+          <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">{initialCourse ? 'Edit Course' : 'Add New Course'}</h2>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8 pb-8">
           <div className="space-y-3 relative z-30">
             <label className={`text-base font-bold uppercase tracking-wider transition-colors ${isError ? 'text-[#FF3B30]' : 'text-[#8B95A1]'}`}>
               Course Name (Optional)
@@ -1329,17 +1333,16 @@ function AddCourseModal({
           </button>
         </form>
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body
   );
-}
-
 function ResetModal({ onClose, onConfirm }: { onClose: () => void, onConfirm: () => void }) {
-  return (
+  return createPortal(
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-6"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6"
       onClick={onClose}
     >
       <motion.div 
@@ -1375,7 +1378,8 @@ function ResetModal({ onClose, onConfirm }: { onClose: () => void, onConfirm: ()
           </button>
         </div>
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body
   );
 }
 
@@ -1646,22 +1650,22 @@ function AddSemesterModal({
     });
   };
 
-  return (
+  return createPortal(
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-6"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-md p-6"
       onClick={onClose}
     >
       <motion.div 
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        initial={{ scale: 0.95, opacity: 0, y: 10 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        exit={{ scale: 0.95, opacity: 0, y: 10 }}
         className="modal-panel space-y-6 max-h-[90dvh] overflow-y-auto custom-scrollbar"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center sticky top-0 bg-transparent backdrop-blur-xl -mt-2 pt-2 z-10">
           <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">Add Semester</h2>
           <button onClick={onClose} className="icon-button h-10 w-10 -mr-1 text-[#8B95A1]">
             <X size={24} />
@@ -1762,6 +1766,7 @@ function AddSemesterModal({
           </button>
         </form>
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body
   );
 }
