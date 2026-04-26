@@ -279,6 +279,9 @@
     border: 1px solid var(--app-outline);
     box-shadow: 0 32px 80px rgba(0, 0, 0, 0.24), 0 0 0 1px var(--app-outline);
     will-change: transform, opacity;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0);
   }
 
   .sheet-panel {

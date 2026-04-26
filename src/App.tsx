@@ -1009,14 +1009,14 @@ function AddAssessmentModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-md p-6"
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-start overflow-y-auto bg-black/60 backdrop-blur-sm p-4 sm:p-6 pt-10 sm:pt-20"
       onClick={onClose}
     >
       <motion.div 
-        initial={{ scale: 0.95, opacity: 0, y: 10 }}
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.95, opacity: 0, y: 10 }}
-        className="modal-panel space-y-6 max-h-[90dvh] overflow-y-auto custom-scrollbar"
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="modal-panel space-y-6 w-full mb-10"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center sticky top-0 bg-transparent backdrop-blur-xl -mt-2 pt-2 z-10">
