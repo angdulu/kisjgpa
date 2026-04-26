@@ -1584,26 +1584,15 @@ function CumulativeView({
                   <div className="text-right">
                     <p className="text-2xl font-black text-[#3182F6]">{s.gpa.toFixed(3)}</p>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditingSemester(s);
-                      }} 
-                      className="icon-button h-10 w-10 text-[#B0B8C1] hover:text-[#3182F6] transition-colors"
-                    >
-                      <Settings size={18} />
-                    </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteSemester(s.id);
-                      }} 
-                      className="icon-button h-10 w-10 text-[#B0B8C1] hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteSemester(s.id);
+                    }} 
+                    className="icon-button h-10 w-10 text-[#B0B8C1] hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
               </div>
             </Reorder.Item>
