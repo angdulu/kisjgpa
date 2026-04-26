@@ -305,7 +305,7 @@ export default function App() {
               </div>
               <div className="text-right">
                 <div className="section-kicker">
-                  {activeTab === 'current' ? 'GPA' : 'CGPA'}
+                  {activeTab === 'cumulative' ? 'CGPA' : 'GPA'}
                 </div>
                 <div className="text-2xl font-black text-[#3182F6]">{displayGPA}</div>
               </div>
