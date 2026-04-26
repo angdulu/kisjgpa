@@ -274,7 +274,7 @@
   }
 
   .modal-panel {
-    @apply w-full max-w-sm rounded-[32px] p-8 backdrop-blur-2xl transition-all duration-300;
+    @apply w-full max-w-sm rounded-[32px] p-8 backdrop-blur-2xl;
     background: var(--app-modal-bg);
     border: 1px solid var(--app-outline);
     box-shadow: 0 32px 80px rgba(0, 0, 0, 0.24), 0 0 0 1px var(--app-outline);
@@ -285,7 +285,7 @@
   }
 
   .sheet-panel {
-    @apply w-full max-w-md rounded-t-[32px] p-8 backdrop-blur-2xl transition-all duration-300;
+    @apply w-full max-w-md rounded-t-[32px] p-8 backdrop-blur-2xl;
     background: var(--app-sheet-bg);
     border-top: 1px solid var(--app-outline);
     box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.18), 0 0 0 1px var(--app-outline);
