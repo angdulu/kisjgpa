@@ -240,6 +240,10 @@ export default function App() {
     setCumulativeGPAs([...cumulativeGPAs, data]);
   };
 
+  const updateSemesterGPA = (updated: SemesterGPA) => {
+    setCumulativeGPAs(cumulativeGPAs.map(s => s.id === updated.id ? updated : s));
+  };
+
   const deleteSemesterGPA = (id: string) => {
     setCumulativeGPAs(cumulativeGPAs.filter(s => s.id !== id));
   };
@@ -335,6 +339,7 @@ export default function App() {
                 <CumulativeView 
                   semesters={cumulativeGPAs} 
                   onAddSemester={addSemesterGPA}
+                  onUpdateSemester={updateSemesterGPA}
                   onDeleteSemester={deleteSemesterGPA}
                   onReorder={setCumulativeGPAs}
                 />
@@ -1527,15 +1532,18 @@ function QuickGPAView() {
 function CumulativeView({ 
   semesters, 
   onAddSemester, 
+  onUpdateSemester,
   onDeleteSemester,
   onReorder
 }: { 
   semesters: SemesterGPA[], 
   onAddSemester: (s: SemesterGPA) => void,
+  onUpdateSemester: (s: SemesterGPA) => void,
   onDeleteSemester: (id: string) => void,
   onReorder: (newSemesters: SemesterGPA[]) => void
 }) {
   const [isAdding, setIsAdding] = useState(false);
+  const [editingSemester, setEditingSemester] = useState<SemesterGPA | null>(null);
 
   const totalGPA = useMemo(() => {
     if (semesters.length === 0) return 0;
@@ -1558,7 +1566,10 @@ function CumulativeView({
         <Reorder.Group axis="y" values={semesters} onReorder={onReorder} className="grid gap-4">
           {semesters.map(s => (
             <Reorder.Item key={s.id} value={s}>
-              <div className="surface-card p-5 rounded-[28px] flex items-center justify-between">
+              <div 
+                onClick={() => setEditingSemester(s)}
+                className="surface-card p-5 rounded-[28px] flex items-center justify-between cursor-pointer group hover:bg-[#F9FAFB] dark:hover:bg-[#1A1A1E] transition-all"
+              >
                 <div className="flex items-center gap-4">
                   <GripVertical size={20} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
                   <div className="surface-card-muted w-12 h-12 rounded-xl flex items-center justify-center text-[#3182F6]">
@@ -1573,9 +1584,26 @@ function CumulativeView({
                   <div className="text-right">
                     <p className="text-2xl font-black text-[#3182F6]">{s.gpa.toFixed(3)}</p>
                   </div>
-                  <button onClick={() => onDeleteSemester(s.id)} className="icon-button h-10 w-10 text-[#B0B8C1] hover:text-red-500 transition-colors" title="Delete">
-                    <Trash2 size={18} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingSemester(s);
+                      }} 
+                      className="icon-button h-10 w-10 text-[#B0B8C1] hover:text-[#3182F6] transition-colors"
+                    >
+                      <Settings size={18} />
+                    </button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteSemester(s.id);
+                      }} 
+                      className="icon-button h-10 w-10 text-[#B0B8C1] hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </div>
               </div>
             </Reorder.Item>
@@ -1600,12 +1628,21 @@ function CumulativeView({
       </div>
 
       <AnimatePresence>
-        {isAdding && (
+        {(isAdding || editingSemester) && (
           <AddSemesterModal 
-            onClose={() => setIsAdding(false)}
-            onSave={(s) => {
-              onAddSemester(s);
+            initialSemester={editingSemester || undefined}
+            onClose={() => {
               setIsAdding(false);
+              setEditingSemester(null);
+            }}
+            onSave={(s) => {
+              if (editingSemester) {
+                onUpdateSemester(s);
+              } else {
+                onAddSemester(s);
+              }
+              setIsAdding(false);
+              setEditingSemester(null);
             }}
           />
         )}
@@ -1616,17 +1653,19 @@ function CumulativeView({
 
 function AddSemesterModal({ 
   onClose, 
-  onSave 
+  onSave,
+  initialSemester
 }: { 
   onClose: () => void, 
-  onSave: (s: SemesterGPA) => void 
+  onSave: (s: SemesterGPA) => void,
+  initialSemester?: SemesterGPA
 }) {
-  const [label, setLabel] = useState('9th Grade');
-  const [semester, setSemester] = useState('1st Semester');
-  const [gpa, setGpa] = useState('');
-  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [label, setLabel] = useState(initialSemester?.label || '9th Grade');
+  const [semester, setSemester] = useState(initialSemester?.semester || '1st Semester');
+  const [gpa, setGpa] = useState(initialSemester?.gpa.toString() || '');
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(!!initialSemester?.gradeCounts);
   const [gradeCounts, setGradeCounts] = useState<SemesterGradeCount[]>(
-    GRADE_SCALE.map(s => ({ grade: s.grade, count: 0 }))
+    initialSemester?.gradeCounts || GRADE_SCALE.map(s => ({ grade: s.grade, count: 0 }))
   );
 
   const calculatedGPA = useMemo(() => calculateSemesterGPA(gradeCounts), [gradeCounts]);
@@ -1643,7 +1682,7 @@ function AddSemesterModal({
     if (isNaN(finalGPA)) return;
 
     onSave({
-      id: Date.now().toString(),
+      id: initialSemester?.id || Date.now().toString(),
       label,
       semester,
       gpa: finalGPA,
