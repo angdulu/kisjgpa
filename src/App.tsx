@@ -187,48 +187,49 @@ export default function App() {
   }, [courses, isWeighted]);
 
   const addCourse = (newCourse: Course) => {
-    setCourses([...courses, newCourse]);
+    setCourses(prev => [...prev, newCourse]);
     setIsAddingCourse(false);
   };
 
   const updateCourse = (updatedCourse: Course) => {
-    setCourses(courses.map(c => c.id === updatedCourse.id ? updatedCourse : c));
+    setCourses(prev => prev.map(c => c.id === updatedCourse.id ? updatedCourse : c));
   };
 
   const deleteCourse = (id: string) => {
     setSelectedCourseId(null);
     setCourses(prev => prev.filter(c => c.id !== id));
   };
+  const deleteCourse = (id: string) => {
+    setCourses(prev => prev.filter(c => c.id !== id));
+    setTimeout(() => setSelectedCourseId(null), 10);
+  };
 
-
-  const addAssessment = (courseId: string, assessment: Assessment) => {
-    setCourses(courses.map(c => 
-      c.id === courseId 
-        ? { ...c, assessments: [...c.assessments, assessment] }
+        ? { ...c, assessments: [...c.assessments, assessment] } 
         : c
     ));
   };
 
   const updateAssessment = (courseId: string, updatedAssessment: Assessment) => {
-    setCourses(courses.map(c => 
+    setCourses(prev => prev.map(c => 
       c.id === courseId 
-        ? { ...c, assessments: c.assessments.map(a => a.id === updatedAssessment.id ? updatedAssessment : a) }
+        ? { ...c, assessments: c.assessments.map(a => a.id === updatedAssessment.id ? updatedAssessment : a) } 
         : c
     ));
   };
 
   const deleteAssessment = (courseId: string, assessmentId: string) => {
-    setCourses(courses.map(c => 
+    setCourses(prev => prev.map(c => 
       c.id === courseId 
-        ? { ...c, assessments: c.assessments.filter(a => a.id !== assessmentId) }
+        ? { ...c, assessments: c.assessments.filter(a => a.id !== assessmentId) } 
         : c
     ));
   };
 
-  const resetAllData = () => {
+  const resetData = () => {
     setCourses(INITIAL_COURSES);
-    setCumulativeGPAs([]);
-    setIsWeighted(true);
+    setIsResetting(false);
+  };
+
     localStorage.removeItem('kisj-gpa-courses');
     localStorage.removeItem('kisj-gpa-cumulative');
     localStorage.removeItem('kisj-gpa-weighted');
