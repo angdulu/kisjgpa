@@ -195,10 +195,11 @@ export default function App() {
     setCourses(courses.map(c => c.id === updatedCourse.id ? updatedCourse : c));
   };
 
-  const deleteCourse = (id: string) => { console.log("Deleting course:", id);
-    setCourses(courses.filter(c => c.id !== id));
+  const deleteCourse = (id: string) => {
     setSelectedCourseId(null);
+    setCourses(prev => prev.filter(c => c.id !== id));
   };
+
 
   const addAssessment = (courseId: string, assessment: Assessment) => {
     setCourses(courses.map(c => 
@@ -909,7 +910,7 @@ function CourseDetail({
 
               <div className="flex flex-col gap-4 pt-2">
                 <button 
-                  onClick={() => { console.log("Modal delete clicked"); onDelete(); }}
+                  onClick={onDelete}
                   className="w-full py-4.5 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 transition-colors text-lg"
                 >
                   Yes, Delete Course
@@ -1035,7 +1036,7 @@ function AddAssessmentModal({
           <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">{initialAssessment ? 'Edit' : 'Add'} {type} Score</h2>
           {onDelete && (
             <button 
-              onClick={() => { console.log("Modal delete clicked"); onDelete(); }}
+              onClick={onDelete}
               className="icon-button h-10 w-10 text-[#8B95A1] hover:text-red-500 transition-colors"
             >
               <Trash2 size={20} />
