@@ -196,14 +196,13 @@ export default function App() {
   };
 
   const deleteCourse = (id: string) => {
+    setCourses(prev => prev.filter(c => c.id !== id));
     setSelectedCourseId(null);
-    setCourses(prev => prev.filter(c => c.id !== id));
-  };
-  const deleteCourse = (id: string) => {
-    setCourses(prev => prev.filter(c => c.id !== id));
-    setTimeout(() => setSelectedCourseId(null), 10);
   };
 
+  const addAssessment = (courseId: string, assessment: Assessment) => {
+    setCourses(prev => prev.map(c => 
+      c.id === courseId 
         ? { ...c, assessments: [...c.assessments, assessment] } 
         : c
     ));
@@ -224,19 +223,14 @@ export default function App() {
         : c
     ));
   };
-
   const resetData = () => {
     setCourses(INITIAL_COURSES);
-    setIsResetting(false);
-  };
-
-    localStorage.removeItem('kisj-gpa-courses');
-    localStorage.removeItem('kisj-gpa-cumulative');
-    localStorage.removeItem('kisj-gpa-weighted');
+    setCumulativeGPAs([]);
     setIsResetting(false);
     setSelectedCourseId(null);
     setIsSidebarOpen(false);
   };
+
 
   const addSemesterGPA = (data: SemesterGPA) => {
     setCumulativeGPAs([...cumulativeGPAs, data]);
