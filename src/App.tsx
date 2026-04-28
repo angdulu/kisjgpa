@@ -34,7 +34,7 @@ import {
   calculateCurrentPercentage, 
   getLetterGrade, 
   calculateGradePoint,
-  calculateSemesterGPA
+  calculateSemesterGPA, formatPercentage
 } from './utils/gpa';
 
 // Mock Initial Data
@@ -577,7 +577,7 @@ function CourseReorderItem({
       <div className="flex items-center gap-2">
         <div className="flex flex-col items-center justify-center min-w-[64px]">
           <div className="text-2xl font-black text-[#3182F6] leading-none mb-1.5">{letterGrade}</div>
-          <div className="text-[12px] text-[#8B95A1] font-bold">{percentage.toFixed(1)}%</div>
+          <div className="text-[12px] text-[#8B95A1] font-bold">{formatPercentage(percentage, 2)}%</div>
         </div>
         <ChevronRight size={22} className="text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors shrink-0" />
       </div>
@@ -702,7 +702,7 @@ function CourseDetail({
           </div>
           <div className="text-right">
             <p className="text-[11px] text-[#8B95A1] font-bold uppercase tracking-wider mb-1">Percentage</p>
-            <p className="text-2xl font-bold text-[#191F28] dark:text-[#F9FAFB]">{percentage.toFixed(1)}%</p>
+            <p className="text-2xl font-bold text-[#191F28] dark:text-[#F9FAFB]">{formatPercentage(percentage, 2)}%</p>
           </div>
         </div>
 
@@ -729,7 +729,7 @@ function CourseDetail({
             <p className="text-[11px] text-[#B0B8C1] font-bold text-center leading-relaxed">
               {isExceeding 
                 ? `Target ${course.targetGrade} reached!` 
-                : `${(targetMinScore - percentage).toFixed(1)}% more for ${course.targetGrade}`
+                : `${formatPercentage(targetMinScore - percentage, 2)}% more for ${course.targetGrade}`
               }
             </p>
           </div>
@@ -770,7 +770,7 @@ function CourseDetail({
 
           const activeList = list.filter(a => a.enabled !== false);
           const average = activeList.length > 0 
-            ? (activeList.reduce((acc, a) => acc + a.score, 0) / activeList.length).toFixed(1) 
+            ? formatPercentage(activeList.reduce((acc, a) => acc + a.score, 0) / activeList.length, 2) 
             : null;
 
           return (
@@ -1042,7 +1042,7 @@ function AddAssessmentModal({
               autoFocus
               type="text"
               inputMode="decimal"
-              pattern="[0-9]*"
+              pattern="[0-9]*\.?[0-9]*"
               step="any"
               value={score}
               onChange={e => {

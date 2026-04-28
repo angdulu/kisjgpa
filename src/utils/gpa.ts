@@ -148,3 +148,12 @@ export function calculateSemesterGPA(gradeCounts: { grade: Grade, count: number 
   if (totalCount === 0) return 0;
   return totalPoints / totalCount;
 }
+
+/**
+ * Formats a percentage by truncating (flooring) to a specific number of decimal places
+ * to avoid rounding confusion (e.g., 89.499... showing as 89.5 but grading as B+).
+ */
+export function formatPercentage(percentage: number, decimals: number = 2): string {
+  const factor = Math.pow(10, decimals);
+  return (Math.floor(percentage * factor) / factor).toFixed(decimals);
+}
