@@ -195,7 +195,7 @@ export default function App() {
     setCourses(courses.map(c => c.id === updatedCourse.id ? updatedCourse : c));
   };
 
-  const deleteCourse = (id: string) => {
+  const deleteCourse = (id: string) => { console.log("Deleting course:", id);
     setCourses(courses.filter(c => c.id !== id));
     setSelectedCourseId(null);
   };
@@ -909,7 +909,7 @@ function CourseDetail({
 
               <div className="flex flex-col gap-4 pt-2">
                 <button 
-                  onClick={onDelete}
+                  onClick={() => { console.log("Modal delete clicked"); onDelete(); }}
                   className="w-full py-4.5 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 transition-colors text-lg"
                 >
                   Yes, Delete Course
@@ -991,14 +991,21 @@ function AddAssessmentModal({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!score) return;
-    
-    const scoreVal = parseFloat(score);
-    if (scoreVal < 0 || scoreVal > 100) {
-      setIsError(true);
+    if (!score || isNaN(parseFloat(score))) {
+      if (isError) setIsError(false);
+      setTimeout(() => setIsError(true), 10);
       setTimeout(() => setIsError(false), 800);
       return;
     }
+    
+    const scoreVal = parseFloat(score);
+    if (scoreVal < 0 || scoreVal > 100) {
+      if (isError) setIsError(false);
+      setTimeout(() => setIsError(true), 10);
+      setTimeout(() => setIsError(false), 800);
+      return;
+    }
+
     
     onSave({
       id: initialAssessment?.id || Date.now().toString(),
@@ -1028,7 +1035,7 @@ function AddAssessmentModal({
           <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">{initialAssessment ? 'Edit' : 'Add'} {type} Score</h2>
           {onDelete && (
             <button 
-              onClick={onDelete}
+              onClick={() => { console.log("Modal delete clicked"); onDelete(); }}
               className="icon-button h-10 w-10 text-[#8B95A1] hover:text-red-500 transition-colors"
             >
               <Trash2 size={20} />
@@ -1170,7 +1177,13 @@ function AddCourseModal({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    
+    if (!name.trim()) {
+      if (isError) setIsError(false);
+      setTimeout(() => setIsError(true), 10);
+      setTimeout(() => setIsError(false), 800);
+      return;
+    }
+
     const courseData: Course = {
       id: initialCourse?.id || Date.now().toString(),
       name: name.trim() || 'Untitled Course',
