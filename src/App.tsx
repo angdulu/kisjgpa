@@ -995,7 +995,7 @@ function AddAssessmentModal({
             </button>
           )}
         </div>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} noValidate className="space-y-6">
           <div className="space-y-2">
             <label className="text-[12px] font-bold text-[#8B95A1] uppercase tracking-widest">Score (%)</label>
             <motion.input 
