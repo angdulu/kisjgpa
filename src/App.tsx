@@ -12,9 +12,7 @@ import {
   ChevronRight, 
   ArrowLeft, 
   Target, 
-  TrendingUp, 
   AlertCircle, 
-  CheckCircle2,
   Trash2,
   Calculator,
   GraduationCap,
@@ -29,7 +27,7 @@ import {
   BarChart3,
   GripVertical
 } from 'lucide-react';
-import { Course, Grade, GRADE_SCALE, Assessment, AssessmentType, SemesterGPA, SemesterGradeCount } from './types';
+import { Course, Grade, Assessment, AssessmentType, SemesterGPA, SemesterGradeCount, SchoolScaleKey, SchoolScaleConfig, SCHOOL_SCALES } from './types';
 import { 
   calculateCurrentPercentage, 
   getLetterGrade, 
@@ -143,6 +141,93 @@ const COURSE_ALIASES: Record<string, string[]> = {
   "hist": ["AP World History", "AP US History", "US History", "Global Studies 9", "Global Studies 10"],
 };
 
+function GpaHeroCard({
+  gpa,
+  title,
+  activeScale,
+  isWeighted,
+  activeScaleKey,
+  setActiveScaleKey,
+  showScaleSelector = false
+}: {
+  gpa: string;
+  title: string;
+  activeScale: SchoolScaleConfig;
+  isWeighted?: boolean;
+  activeScaleKey: SchoolScaleKey;
+  setActiveScaleKey?: (key: SchoolScaleKey) => void;
+  showScaleSelector?: boolean;
+}) {
+  const maxGPA = (activeScaleKey === 'KISJ' && isWeighted !== false) ? 4.5 : 4.0;
+  const gpaNumber = parseFloat(gpa);
+  const percentage = isNaN(gpaNumber) ? 0 : (gpaNumber / maxGPA) * 100;
+  const radius = 32;
+  const strokeWidth = 5;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (Math.min(percentage, 100) / 100) * circumference;
+
+  return (
+    <div className="surface-card p-6 flex items-center gap-6 mb-6">
+      <div className="relative flex-shrink-0">
+        <svg className="w-20 h-20 rotate-[-90deg]" viewBox="0 0 72 72">
+          <circle cx="36" cy="36" r={radius} fill="none" stroke="var(--app-divider)" strokeWidth={strokeWidth} />
+          <circle 
+            cx="36" 
+            cy="36" 
+            r={radius} 
+            fill="none" 
+            stroke="var(--app-accent)" 
+            strokeWidth={strokeWidth} 
+            strokeDasharray={circumference} 
+            strokeDashoffset={strokeDashoffset} 
+            strokeLinecap="round" 
+            className="transition-all duration-500 ease-out" 
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center text-[var(--app-accent)]">
+          <GraduationCap size={22} />
+        </div>
+      </div>
+      <div className="flex-1 min-w-0">
+        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--app-muted)]">
+          {title}
+        </span>
+        <div className="flex items-baseline gap-1.5 mt-0.5">
+          <span className="text-4xl font-extrabold tracking-tight text-[var(--app-text)]">{gpa}</span>
+          <span className="text-sm font-semibold text-[var(--app-muted)]">/ {maxGPA.toFixed(1)}</span>
+        </div>
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
+          {isWeighted !== undefined && (
+            <span className="text-[10px] font-bold bg-[var(--app-surface-muted)] text-[var(--app-muted)] px-2 py-0.5 rounded-full border border-[var(--app-border)]">
+              {isWeighted ? 'Weighted' : 'Unweighted'}
+            </span>
+          )}
+          {showScaleSelector && setActiveScaleKey ? (
+            <div className="relative">
+              <select
+                value={activeScaleKey}
+                onChange={(e) => setActiveScaleKey(e.target.value as SchoolScaleKey)}
+                className="appearance-none bg-[var(--app-surface-muted)] hover:bg-[var(--app-icon-bg)] text-[10px] font-bold text-[var(--app-muted)] pl-2.5 py-0.5 pr-6 rounded-full border border-[var(--app-border)] outline-none cursor-pointer transition-colors"
+              >
+                {Object.values(SCHOOL_SCALES).map((scale) => (
+                  <option key={scale.key} value={scale.key} className="bg-[var(--app-surface)] text-[var(--app-text)]">
+                    {scale.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--app-muted)] pointer-events-none" size={10} />
+            </div>
+          ) : (
+            <span className="text-[10px] font-bold bg-[var(--app-surface-muted)] text-[var(--app-muted)] px-2 py-0.5 rounded-full border border-[var(--app-border)]">
+              {activeScale.name}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [courses, setCourses] = useState<Course[]>(() => {
     const saved = localStorage.getItem('kisj-gpa-courses');
@@ -161,6 +246,18 @@ export default function App() {
     const saved = localStorage.getItem('kisj-gpa-cumulative');
     return saved ? JSON.parse(saved) : [];
   });
+  const [activeScaleKey, setActiveScaleKey] = useState<SchoolScaleKey>(() => {
+    const saved = localStorage.getItem('kisj-gpa-school-scale');
+    return (saved as SchoolScaleKey) || 'KISJ';
+  });
+
+  const activeScale = useMemo(() => {
+    return SCHOOL_SCALES[activeScaleKey] || SCHOOL_SCALES.KISJ;
+  }, [activeScaleKey]);
+
+  useEffect(() => {
+    localStorage.setItem('kisj-gpa-school-scale', activeScaleKey);
+  }, [activeScaleKey]);
 
   useEffect(() => {
     localStorage.setItem('kisj-gpa-courses', JSON.stringify(courses));
@@ -181,10 +278,10 @@ export default function App() {
 
   const overallGPA = useMemo(() => {
     if (courses.length === 0) return "0.000";
-    const totalPoints = courses.reduce((acc, c) => acc + (calculateGradePoint(c, isWeighted) * (c.credit || 1.0)), 0);
+    const totalPoints = courses.reduce((acc, c) => acc + (calculateGradePoint(c, isWeighted, activeScale) * (c.credit || 1.0)), 0);
     const totalCredits = courses.reduce((acc, c) => acc + (c.credit || 1.0), 0);
     return (totalPoints / totalCredits).toFixed(3);
-  }, [courses, isWeighted]);
+  }, [courses, isWeighted, activeScale]);
 
   const addCourse = (newCourse: Course) => {
     setCourses(prev => [...prev, newCourse]);
@@ -251,14 +348,9 @@ export default function App() {
     return (sum / cumulativeGPAs.length).toFixed(3);
   }, [cumulativeGPAs]);
 
-  const displayGPA = activeTab === 'current' ? overallGPA : (activeTab === 'cumulative' ? cumulativeGPAVal : "Quick");
-
   return (
     <div className="app-shell font-sans">
       <div className="app-frame">
-        <div className="ambient-orb left-[-4rem] top-[-3rem] h-40 w-40 bg-slate-900/5 dark:bg-white/3" />
-        <div className="ambient-orb right-[-3rem] top-28 h-32 w-32 bg-slate-900/4 dark:bg-white/2" />
-        <div className="ambient-orb bottom-24 left-[-2rem] h-32 w-32 bg-slate-900/5 dark:bg-white/3" />
         
         {/* Header */}
         <header className="glass-header px-6 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-5 flex items-center justify-between">
@@ -284,12 +376,14 @@ export default function App() {
               </button>
               <div className="flex flex-col">
                 <span className="section-kicker">Academic Planner</span>
-                <h1 className="text-xl font-extrabold tracking-tight">KISJ GPA</h1>
+                <h1 className="text-xl font-extrabold tracking-tight">
+                  {activeTab === 'current' ? 'Term View' : activeTab === 'cumulative' ? 'Cumulative' : 'Quick GPA'}
+                </h1>
               </div>
             </div>
           )}
-          {!selectedCourseId && (
-            <div className="flex items-center gap-5">
+          {!selectedCourseId && activeTab === 'current' && (
+            <div className="flex items-center gap-3">
               <div className="segmented-shell flex items-center">
                 <button 
                   onClick={() => setIsWeighted(false)}
@@ -303,12 +397,6 @@ export default function App() {
                 >
                   W
                 </button>
-              </div>
-              <div className="text-right">
-                <div className="section-kicker">
-                  {activeTab === 'cumulative' ? 'CGPA' : 'GPA'}
-                </div>
-                <div className="text-2xl font-black text-[#3182F6]">{displayGPA}</div>
               </div>
             </div>
           )}
@@ -325,12 +413,18 @@ export default function App() {
                   onAddAssessment={(a) => addAssessment(selectedCourse!.id, a)}
                   onUpdateAssessment={(a) => updateAssessment(selectedCourse!.id, a)}
                   onDeleteAssessment={(id) => deleteAssessment(selectedCourse!.id, id)}
+                  activeScale={activeScale}
                 />
               ) : activeTab === 'current' ? (
                 <CurrentTermView 
                   courses={courses} 
                   onSelectCourse={setSelectedCourseId} 
                   onReorder={setCourses}
+                  activeScale={activeScale}
+                  overallGPA={overallGPA}
+                  isWeighted={isWeighted}
+                  activeScaleKey={activeScaleKey}
+                  setActiveScaleKey={setActiveScaleKey}
                 />
               ) : activeTab === 'cumulative' ? (
                 <CumulativeView 
@@ -339,29 +433,33 @@ export default function App() {
                   onUpdateSemester={updateSemesterGPA}
                   onDeleteSemester={deleteSemesterGPA}
                   onReorder={setCumulativeGPAs}
+                  activeScale={activeScale}
+                  cumulativeGPAVal={cumulativeGPAVal}
+                  activeScaleKey={activeScaleKey}
+                  setActiveScaleKey={setActiveScaleKey}
+                  isWeighted={isWeighted}
                 />
               ) : (
-                <QuickGPAView />
+                <QuickGPAView 
+                  activeScale={activeScale} 
+                  activeScaleKey={activeScaleKey}
+                  setActiveScaleKey={setActiveScaleKey}
+                />
               )}
             </AnimatePresence>
           </div>
         </main>
 
         {!selectedCourseId && (
-          <div className="px-6 py-5 z-10">
-            <div className="surface-card-muted p-4 rounded-[26px] flex items-center justify-between gap-4">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2 text-[#3182F6]">
-                  <ShieldCheck size={18} />
-                  <span className="text-[12px] font-bold uppercase tracking-wider">Privacy First</span>
-                </div>
-                <p className="text-[11px] text-[#8B95A1] leading-relaxed">Data is stored only on your device.</p>
-              </div>
+          <div className="px-6 py-5 z-10 border-t border-[var(--app-border)] bg-[var(--app-surface-muted)]">
+            <div className="flex items-center justify-center gap-1.5 text-[11px] text-[var(--app-muted)]">
+              <ShieldCheck size={14} className="text-[var(--app-accent)]" />
+              <span>Data is stored only on your device (Privacy First)</span>
             </div>
-            <footer className="mt-4 flex items-center justify-center gap-4 text-[11px] text-[#94A3B8] dark:text-[#64748B]">
+            <footer className="mt-3 flex items-center justify-center gap-4 text-[11px] text-[var(--app-muted)]">
               <span>KISJ Guidelines</span>
-              <span className="w-px h-3 bg-slate-200/70 dark:bg-white/10" />
-              <a href="mailto:jwookim27@kis.ac" className="text-[#3182F6] font-bold hover:underline">Support</a>
+              <span className="w-px h-3 bg-[var(--app-divider)]" />
+              <a href="mailto:jwookim27@kis.ac" className="text-[var(--app-accent)] font-bold hover:underline">Support</a>
             </footer>
           </div>
         )}
@@ -386,6 +484,7 @@ export default function App() {
             <AddCourseModal 
               onClose={() => setIsAddingCourse(false)} 
               onAdd={addCourse} 
+              activeScale={activeScale}
             />
           )}
           {isResetting && (
@@ -409,6 +508,8 @@ export default function App() {
               onReset={() => {
                 setIsResetting(true);
               }}
+              activeScaleKey={activeScaleKey}
+              onChangeActiveScaleKey={setActiveScaleKey}
             />
           )}
         </AnimatePresence>
@@ -421,12 +522,16 @@ function Sidebar({
   onClose, 
   activeTab, 
   onTabChange,
-  onReset
+  onReset,
+  activeScaleKey,
+  onChangeActiveScaleKey
 }: { 
-  onClose: () => void, 
-  activeTab: 'current' | 'cumulative' | 'quick',
-  onTabChange: (tab: 'current' | 'cumulative' | 'quick') => void,
-  onReset: () => void
+  onClose: () => void;
+  activeTab: 'current' | 'cumulative' | 'quick';
+  onTabChange: (tab: 'current' | 'cumulative' | 'quick') => void;
+  onReset: () => void;
+  activeScaleKey: SchoolScaleKey;
+  onChangeActiveScaleKey: (key: SchoolScaleKey) => void;
 }) {
   return (
     <>
@@ -442,54 +547,80 @@ function Sidebar({
         animate={{ x: 0 }}
         exit={{ x: '-100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed inset-y-0 left-0 z-[70] flex w-72 flex-col p-6 sidebar-panel surface-card-strong border-r border-white/20"
+        className="fixed inset-y-0 left-0 z-[70] flex w-72 flex-col p-6 bg-[var(--app-surface)] border-r border-[var(--app-border)] shadow-2xl"
       >
-        <div className="flex items-center justify-between mb-10">
+        <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#3B82F6_0%,#2563EB_100%)] text-white shadow-lg shadow-blue-500/20">
-              <GraduationCap size={18} className="text-white" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--app-surface-muted)] text-[var(--app-accent)] border border-[var(--app-border)]">
+              <GraduationCap size={18} />
             </div>
-            <span className="font-bold text-lg">Menu</span>
+            <span className="font-bold text-lg text-[var(--app-text)]">Menu</span>
           </div>
-          <button onClick={onClose} className="icon-button h-10 w-10 -mr-1 text-[#64748B] dark:text-[#CBD5E1]">
-            <X size={24} />
+          <button onClick={onClose} className="icon-button h-9 w-9 -mr-1 text-[var(--app-muted)]">
+            <X size={20} />
           </button>
         </div>
 
-        <nav className="flex-1 space-y-2">
+        <nav className="space-y-2 mb-6">
           <SidebarItem 
-            icon={<Calendar size={20} />} 
+            icon={<Calendar size={18} />} 
             label="Current Term" 
             isActive={activeTab === 'current'} 
             onClick={() => onTabChange('current')}
           />
           <SidebarItem 
-            icon={<History size={20} />} 
+            icon={<History size={18} />} 
             label="Cumulative GPA" 
             isActive={activeTab === 'cumulative'} 
             onClick={() => onTabChange('cumulative')}
           />
           <SidebarItem 
-            icon={<Calculator size={20} />} 
+            icon={<Calculator size={18} />} 
             label="Quick GPA" 
             isActive={activeTab === 'quick'} 
             onClick={() => onTabChange('quick')}
           />
         </nav>
 
-        <div className="pt-6 border-t border-slate-200/70 dark:border-white/8 space-y-2">
-          <SidebarItem 
-            icon={<Settings size={20} />} 
-            label="Settings" 
-            onClick={() => {}}
-          />
+        <div className="pt-6 border-t border-[var(--app-border)] space-y-4">
+          <div className="flex flex-col gap-1.5 px-3">
+            <label className="text-[10px] font-bold text-[var(--app-muted)] uppercase tracking-wider">School Scale</label>
+            <div className="relative">
+              <select
+                value={activeScaleKey}
+                onChange={(e) => onChangeActiveScaleKey(e.target.value as SchoolScaleKey)}
+                className="w-full p-3 pr-10 bg-[var(--app-surface-muted)] text-[var(--app-text)] rounded-xl font-bold border border-[var(--app-border)] outline-none cursor-pointer text-sm appearance-none"
+              >
+                {Object.values(SCHOOL_SCALES).map((scale) => (
+                  <option key={scale.key} value={scale.key} className="bg-[var(--app-surface)] text-[var(--app-text)]">
+                    {scale.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--app-muted)] pointer-events-none" size={16} />
+            </div>
+          </div>
+
           <button 
             onClick={onReset}
-            className="danger-button w-full p-4 flex items-center gap-4"
+            className="danger-button w-full p-3.5 flex items-center justify-center gap-2"
           >
-            <Trash2 size={20} />
+            <Trash2 size={18} />
             Reset All Data
           </button>
+        </div>
+
+        {/* Pinned Footer Section */}
+        <div className="mt-auto pt-6 border-t border-[var(--app-border)] flex flex-col items-center gap-3">
+          <div className="flex items-center gap-1.5 text-[10px] text-[var(--app-muted)] text-center">
+            <ShieldCheck size={12} className="text-[var(--app-accent)] flex-shrink-0" />
+            <span>Privacy First (Local storage only)</span>
+          </div>
+          <div className="flex items-center gap-3 text-[10px] text-[var(--app-muted)]">
+            <span>KISJ Guidelines</span>
+            <span className="w-px h-2.5 bg-[var(--app-divider)]" />
+            <a href="mailto:jwookim27@kis.ac" className="text-[var(--app-accent)] font-semibold hover:underline">Support</a>
+          </div>
         </div>
       </motion.div>
     </>
@@ -497,38 +628,40 @@ function Sidebar({
 }
 
 function SidebarItem({ icon, label, isActive, onClick }: { 
-  icon: React.ReactNode, 
-  label: string, 
-  isActive?: boolean, 
-  onClick: () => void 
+  icon: React.ReactNode;
+  label: string;
+  isActive?: boolean;
+  onClick: () => void;
 }) {
   return (
     <button 
       onClick={onClick}
-      className={`w-full p-4 flex items-center gap-4 rounded-2xl transition-all ${
+      className={`w-full p-3 flex items-center gap-3.5 rounded-xl transition-all font-semibold text-sm ${
         isActive 
-          ? 'surface-card text-[#3182F6] shadow-sm' 
-          : 'text-[#8B95A1] hover:bg-white/70 dark:hover:bg-white/5'
+          ? 'bg-[var(--app-surface-muted)] text-[var(--app-accent)] border border-[var(--app-border)] shadow-sm' 
+          : 'text-[var(--app-muted)] hover:bg-[var(--app-surface-muted)] border border-transparent'
       }`}
     >
-      <div className={isActive ? 'text-[#3182F6]' : 'text-[#B0B8C1]'}>
+      <div className={isActive ? 'text-[var(--app-accent)]' : 'text-[var(--app-soft)]'}>
         {icon}
       </div>
-      <span className="font-bold">{label}</span>
+      <span>{label}</span>
     </button>
   );
 }
 
 function CourseReorderItem({
   course,
-  onSelectCourse
+  onSelectCourse,
+  activeScale
 }: {
-  key?: React.Key,
-  course: Course,
-  onSelectCourse: (id: string) => void
+  key?: React.Key;
+  course: Course;
+  onSelectCourse: (id: string) => void;
+  activeScale: SchoolScaleConfig;
 }) {
   const percentage = calculateCurrentPercentage(course);
-  const letterGrade = getLetterGrade(percentage);
+  const letterGrade = getLetterGrade(percentage, activeScale);
   const dragControls = useDragControls();
   const isReorderingRef = useRef(false);
 
@@ -550,33 +683,35 @@ function CourseReorderItem({
         if (isReorderingRef.current) return;
         onSelectCourse(course.id);
       }}
-      className="surface-card-strong p-5 rounded-[28px] cursor-pointer flex items-center justify-between group select-none relative z-10"
+      className="apple-list-row bg-[var(--app-surface)] group select-none relative z-10"
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 min-w-0 flex-1">
         <button
           type="button"
           onPointerDown={(e) => {
             e.stopPropagation();
             dragControls.start(e);
           }}
-          className="flex items-center justify-center p-2 -ml-2 text-[#B0B8C1] hover:text-[#3182F6] cursor-grab active:cursor-grabbing touch-none transition-colors"
+          className="flex items-center justify-center p-2 -ml-2 text-[var(--app-soft)] hover:text-[var(--app-accent)] cursor-grab active:cursor-grabbing touch-none transition-colors flex-shrink-0"
           aria-label="Reorder course"
         >
-          <GripVertical size={20} />
+          <GripVertical size={18} />
         </button>
-        <div className="flex flex-col gap-0.5">
+        <div className="flex items-start gap-2 min-w-0 flex-1">
           {course.isAP && (
-            <span className="text-[10px] font-black text-orange-500 dark:text-orange-400 uppercase tracking-[0.15em] leading-none mb-0.5">AP</span>
+            <span className="text-[9px] font-bold bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 px-1.5 py-0.5 rounded tracking-wider uppercase flex-shrink-0 mt-[4px]">
+              AP
+            </span>
           )}
-          <span className="font-bold text-xl leading-tight dark:text-[#F9FAFB]">{course.name}</span>
+          <span className="font-semibold text-lg tracking-tight text-[var(--app-text)] leading-tight break-words min-w-0 flex-1">{course.name}</span>
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        <div className="flex flex-col items-center justify-center min-w-[64px]">
-          <div className="text-2xl font-black text-[#3182F6] leading-none mb-1.5">{letterGrade}</div>
-          <div className="text-[12px] text-[#8B95A1] font-bold">{formatPercentage(percentage, 2)}%</div>
+      <div className="flex items-center gap-3 shrink-0 ml-4">
+        <div className="text-right">
+          <div className="text-lg font-bold text-[var(--app-text)] leading-none">{letterGrade}</div>
+          <div className="text-[11px] text-[var(--app-muted)] font-medium mt-1">{formatPercentage(percentage, 2)}%</div>
         </div>
-        <ChevronRight size={22} className="text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors shrink-0" />
+        <ChevronRight size={18} className="text-[var(--app-soft)] group-hover:text-[var(--app-accent)] transition-colors shrink-0" />
       </div>
     </Reorder.Item>
   );
@@ -585,34 +720,58 @@ function CourseReorderItem({
 function CurrentTermView({ 
   courses, 
   onSelectCourse,
-  onReorder 
+  onReorder,
+  activeScale,
+  overallGPA,
+  isWeighted,
+  activeScaleKey,
+  setActiveScaleKey
 }: { 
-  courses: Course[], 
-  onSelectCourse: (id: string) => void,
-  onReorder: (newCourses: Course[]) => void
+  courses: Course[];
+  onSelectCourse: (id: string) => void;
+  onReorder: (newCourses: Course[]) => void;
+  activeScale: SchoolScaleConfig;
+  overallGPA: string;
+  isWeighted: boolean;
+  activeScaleKey: SchoolScaleKey;
+  setActiveScaleKey: (key: SchoolScaleKey) => void;
 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="space-y-8"
+      className="space-y-6"
     >
+      <GpaHeroCard 
+        gpa={overallGPA}
+        title="Current GPA"
+        activeScale={activeScale}
+        isWeighted={isWeighted}
+        activeScaleKey={activeScaleKey}
+        setActiveScaleKey={setActiveScaleKey}
+        showScaleSelector={true}
+      />
+
       <section>
-        <div className="grid gap-3.5">
-          <Reorder.Group axis="y" values={courses} onReorder={onReorder} className="grid gap-3.5">
+        {courses.length > 0 ? (
+          <Reorder.Group 
+            axis="y" 
+            values={courses} 
+            onReorder={onReorder} 
+            className="apple-list bg-[var(--app-surface)]"
+          >
             {courses.map(course => (
-              <CourseReorderItem key={course.id} course={course} onSelectCourse={onSelectCourse} />
+              <CourseReorderItem key={course.id} course={course} onSelectCourse={onSelectCourse} activeScale={activeScale} />
             ))}
           </Reorder.Group>
-          {courses.length === 0 && (
-            <div className="surface-card-muted rounded-[30px] text-center py-12 text-[#8B95A1]">
-              <Calculator size={48} className="mx-auto mb-4 opacity-20" />
-              <p>No courses added yet.</p>
-              <p className="text-sm">Tap the + button to start.</p>
-            </div>
-          )}
-        </div>
+        ) : (
+          <div className="surface-card-muted rounded-[24px] text-center py-12 text-[var(--app-muted)] border border-[var(--app-border)]">
+            <Calculator size={48} className="mx-auto mb-4 opacity-20" />
+            <p className="font-bold">No courses added yet.</p>
+            <p className="text-sm">Tap the + button to start.</p>
+          </div>
+        )}
       </section>
     </motion.div>
   );
@@ -624,21 +783,23 @@ function CourseDetail({
   onUpdateCourse,
   onAddAssessment, 
   onUpdateAssessment,
-  onDeleteAssessment 
+  onDeleteAssessment,
+  activeScale
 }: { 
   course: Course, 
   onDelete: () => void,
   onUpdateCourse: (c: Course) => void,
   onAddAssessment: (a: Assessment) => void,
   onUpdateAssessment: (a: Assessment) => void,
-  onDeleteAssessment: (id: string) => void
+  onDeleteAssessment: (id: string) => void,
+  activeScale: SchoolScaleConfig
 }) {
   const percentage = calculateCurrentPercentage(course);
-  const letterGrade = getLetterGrade(percentage);
+  const letterGrade = getLetterGrade(percentage, activeScale);
   
   const targetMinScore = useMemo(() => 
-    GRADE_SCALE.find(s => s.grade === course.targetGrade)?.minScore || 92.5,
-    [course.targetGrade]
+    activeScale.grades.find(s => s.grade === course.targetGrade)?.minScore || 90.0,
+    [course.targetGrade, activeScale]
   );
 
   const targetProgress = Math.min((percentage / targetMinScore) * 100, 100);
@@ -668,38 +829,38 @@ function CourseDetail({
       className="space-y-8"
     >
       {/* Summary Card */}
-      <div className="surface-card-muted rounded-[32px] px-5 py-8 text-center space-y-3 relative">
+      <div className="surface-card p-6 text-center space-y-3 relative rounded-[24px]">
         <div className="flex flex-col items-center justify-center gap-1.5">
           {course.isAP && (
-            <span className="text-[11px] font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2.5 py-1 rounded-full uppercase">AP</span>
+            <span className="text-[10px] font-bold bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded uppercase tracking-wider">AP</span>
           )}
-          <h2 className="text-4xl font-extrabold tracking-tight dark:text-[#F9FAFB] leading-tight px-4">{course.name}</h2>
+          <h2 className="text-3xl font-extrabold tracking-tight text-[var(--app-text)] leading-tight px-4">{course.name}</h2>
           <button 
             onClick={() => setIsEditingCourse(true)}
-            className="icon-button h-10 w-10 text-[#8B95A1] flex items-center justify-center"
+            className="icon-button h-9 w-9 text-[var(--app-muted)] flex items-center justify-center mt-1"
           >
-            <Settings size={20} />
+            <Settings size={18} />
           </button>
         </div>
         <div 
           onClick={() => setIsEditingCourse(true)}
-          className="flex items-center justify-center gap-2 text-[#8B95A1] font-bold cursor-pointer hover:text-[#3182F6] transition-colors text-base"
+          className="flex items-center justify-center gap-1.5 text-[var(--app-muted)] font-semibold cursor-pointer hover:text-[var(--app-accent)] transition-colors text-sm"
         >
           <span>Target Grade: {course.targetGrade || 'Not Set'}</span>
-          <ChevronDown size={18} className="mt-0.5" />
+          <ChevronDown size={14} className="mt-0.5" />
         </div>
       </div>
 
       {/* Grade Gauge */}
-      <div className="surface-card-strong p-6 rounded-[32px] space-y-5">
+      <div className="surface-card p-6 rounded-[24px] space-y-5">
         <div className="flex justify-between items-center">
           <div>
-            <p className="text-[11px] text-[#8B95A1] font-bold uppercase tracking-wider mb-1">Current Grade</p>
-            <p className="text-5xl font-black text-[#3182F6]">{letterGrade}</p>
+            <p className="text-[10px] text-[var(--app-muted)] font-bold uppercase tracking-wider mb-1">Current Grade</p>
+            <p className="text-4xl font-extrabold text-[var(--app-accent)]">{letterGrade}</p>
           </div>
           <div className="text-right">
-            <p className="text-[11px] text-[#8B95A1] font-bold uppercase tracking-wider mb-1">Percentage</p>
-            <p className="text-2xl font-bold text-[#191F28] dark:text-[#F9FAFB]">{formatPercentage(percentage, 2)}%</p>
+            <p className="text-[10px] text-[var(--app-muted)] font-bold uppercase tracking-wider mb-1">Percentage</p>
+            <p className="text-2xl font-bold text-[var(--app-text)]">{formatPercentage(percentage, 2)}%</p>
           </div>
         </div>
 
@@ -707,23 +868,23 @@ function CourseDetail({
         {course.targetGrade ? (
           <div className="space-y-3">
             <div className="flex justify-between items-end">
-              <div className="flex items-center gap-2">
-                <Target size={16} className={isExceeding ? "text-emerald-500" : "text-[#3182F6]"} />
-                <span className="text-[12px] font-bold text-[#8B95A1] uppercase tracking-wider">Target Progress</span>
+              <div className="flex items-center gap-1.5">
+                <Target size={14} className={isExceeding ? "text-emerald-500" : "var(--app-accent)"} />
+                <span className="text-[10px] font-bold text-[var(--app-muted)] uppercase tracking-wider">Target Progress</span>
               </div>
-              <span className={`text-sm font-black ${isExceeding ? "text-emerald-500" : "text-[#3182F6]"}`}>
+              <span className={`text-xs font-bold ${isExceeding ? "text-emerald-500" : "text-[var(--app-accent)]"}`}>
                 {isExceeding ? 'EXCEEDED' : `${targetProgress.toFixed(0)}%`}
               </span>
             </div>
-            <div className="h-4 bg-[#F2F4F6] dark:bg-[#2C2C34] rounded-full overflow-hidden relative">
+            <div className="h-3.5 bg-[var(--app-surface-muted)] rounded-full overflow-hidden relative border border-[var(--app-border)]">
               <motion.div 
                 initial={{ width: 0 }}
                 animate={{ width: `${targetProgress}%` }}
                 transition={{ duration: 1, ease: "easeOut" }}
-                className={`h-full rounded-full ${isExceeding ? 'bg-emerald-500' : 'bg-[#3182F6]'}`}
+                className={`h-full rounded-full ${isExceeding ? 'bg-emerald-500' : 'bg-[var(--app-accent)]'}`}
               />
             </div>
-            <p className="text-[11px] text-[#B0B8C1] font-bold text-center leading-relaxed">
+            <p className="text-[10px] text-[var(--app-soft)] font-bold text-center leading-relaxed">
               {isExceeding 
                 ? `Target ${course.targetGrade} reached!` 
                 : `${formatPercentage(targetMinScore - percentage, 2)}% more for ${course.targetGrade}`
@@ -733,33 +894,33 @@ function CourseDetail({
         ) : (
           <div 
             onClick={() => setIsEditingCourse(true)}
-            className="surface-card-muted py-4 rounded-[24px] flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-white/80 dark:hover:bg-white/5 transition-colors border-2 border-dashed border-slate-200/80 dark:border-white/8"
+            className="bg-[var(--app-surface-muted)] py-4 rounded-[20px] flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-[var(--app-divider)] transition-colors border border-dashed border-[var(--app-border-strong)]"
           >
-            <Target size={20} className="text-[#B0B8C1]" />
-            <p className="text-[12px] font-bold text-[#8B95A1]">Tap to set your target grade</p>
+            <Target size={18} className="text-[var(--app-soft)]" />
+            <p className="text-[11px] font-bold text-[var(--app-muted)]">Tap to set your target grade</p>
           </div>
         )}
       </div>
 
       {/* Final Exam Mode Toggle */}
-      <div className="surface-card p-5 rounded-[28px] flex items-center justify-between">
+      <div className="surface-card p-5 rounded-[24px] flex items-center justify-between">
         <div className="flex flex-col">
-          <span className="font-bold text-[#191F28] dark:text-[#F9FAFB]">Final Exam Mode</span>
-          <span className="text-xs text-[#8B95A1]">60/20/20 Weighting Ratio</span>
+          <span className="font-bold text-[var(--app-text)]">Final Exam Mode</span>
+          <span className="text-xs text-[var(--app-muted)]">60/20/20 Weighting Ratio</span>
         </div>
         <button 
           onClick={toggleFinalMode}
-          className={`w-12 h-6 rounded-full transition-colors relative ${course.hasFinal ? 'bg-[#3182F6]' : 'bg-[#B0B8C1] dark:bg-[#333D4B]'}`}
+          className={`w-11 h-6 rounded-full transition-colors relative ${course.hasFinal ? 'bg-[var(--app-accent)]' : 'bg-[var(--app-soft)]/20 dark:bg-white/10'}`}
         >
           <motion.div 
-            animate={{ x: course.hasFinal ? 26 : 2 }}
+            animate={{ x: course.hasFinal ? 22 : 2 }}
             className="absolute top-1 left-0 w-4 h-4 bg-white rounded-full shadow-sm"
           />
         </button>
       </div>
 
       {/* Assessments List (Toss Style) */}
-      <section className="space-y-6">
+      <section className="space-y-5">
         {(['Summative', 'Formative', 'Final'] as AssessmentType[]).map(type => {
           const list = assessmentsByType[type];
           const isFinalDisabled = type === 'Final' && !course.hasFinal;
@@ -771,98 +932,98 @@ function CourseDetail({
             : null;
 
           return (
-            <div key={type} className={`space-y-3 ${isFinalDisabled ? 'opacity-40 grayscale' : ''}`}>
+            <div key={type} className={`space-y-2.5 ${isFinalDisabled ? 'opacity-40 grayscale' : ''}`}>
               <div className="flex items-center justify-between px-2">
-                <div className="flex items-baseline gap-2">
-                  <h4 className="text-sm font-bold text-[#8B95A1] uppercase tracking-widest">{type}</h4>
+                <div className="flex items-baseline gap-1.5">
+                  <h4 className="text-[11px] font-bold text-[var(--app-muted)] uppercase tracking-widest">{type}</h4>
                   {average && (
-                    <span className="text-sm font-bold text-[#B0B8C1]">(Avg: {average}%)</span>
+                    <span className="text-[11px] font-bold text-[var(--app-soft)]">(Avg: {average}%)</span>
                   )}
                 </div>
                 {!isFinalDisabled && (
                   <button 
                     onClick={() => setIsAddingAssessment(type)}
-                    className="icon-button h-8 w-8 text-[#3182F6]"
+                    className="icon-button h-7 w-7 text-[var(--app-accent)]"
                   >
-                    <Plus size={16} />
+                    <Plus size={14} />
                   </button>
                 )}
               </div>
               
-              <Reorder.Group 
-                axis="y" 
-                values={list} 
-                onReorder={(newList) => {
-                  const otherTypes = course.assessments.filter(a => a.type !== type);
-                  onUpdateCourse({ ...course, assessments: [...otherTypes, ...newList] });
-                }}
-                className="surface-card rounded-[30px] overflow-hidden divide-y divide-slate-200/70 dark:divide-white/8"
-              >
-                {list.map(a => (
-                <Reorder.Item
-                    key={a.id}
-                    value={a}
-                    onDragStart={() => {
-                      isReorderingAssessmentsRef.current = true;
-                    }}
-                    onDragEnd={() => {
-                      window.setTimeout(() => {
-                        isReorderingAssessmentsRef.current = false;
-                      }, 0);
-                    }}
-                    onTap={() => {
-                      if (isFinalDisabled || isReorderingAssessmentsRef.current) return;
-                      setEditingAssessment(a);
-                    }}
-                    whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
-                    className={`p-4 flex items-center justify-between transition-colors group cursor-pointer select-none ${a.enabled === false ? 'opacity-80 bg-[#fbfbfb11]' : ''}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <GripVertical size={18} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
-                      <div className="surface-card-muted w-10 h-10 rounded-xl flex items-center justify-center text-[#8B95A1]">
-                        <FileText size={20} />
+              {list.length > 0 ? (
+                <Reorder.Group 
+                  axis="y" 
+                  values={list} 
+                  onReorder={(newList) => {
+                    const otherTypes = course.assessments.filter(a => a.type !== type);
+                    onUpdateCourse({ ...course, assessments: [...otherTypes, ...newList] });
+                  }}
+                  className="apple-list bg-[var(--app-surface)]"
+                >
+                  {list.map(a => (
+                    <Reorder.Item
+                      key={a.id}
+                      value={a}
+                      onDragStart={() => {
+                        isReorderingAssessmentsRef.current = true;
+                      }}
+                      onDragEnd={() => {
+                        window.setTimeout(() => {
+                          isReorderingAssessmentsRef.current = false;
+                        }, 0);
+                      }}
+                      onTap={() => {
+                        if (isFinalDisabled || isReorderingAssessmentsRef.current) return;
+                        setEditingAssessment(a);
+                      }}
+                      className={`apple-list-row bg-[var(--app-surface)] group select-none relative z-10 ${a.enabled === false ? 'opacity-50' : ''}`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <GripVertical size={16} className="text-[var(--app-soft)] cursor-grab active:cursor-grabbing flex-shrink-0" />
+                        <div className="w-8 h-8 rounded-lg bg-[var(--app-surface-muted)] flex items-center justify-center text-[var(--app-soft)] border border-[var(--app-border)] flex-shrink-0">
+                          <FileText size={16} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-sm text-[var(--app-text)] break-words leading-tight">{a.memo}</p>
+                        </div>
                       </div>
-                      <div className="flex items-center">
-                        <p className="font-bold text-sm dark:text-[#F9FAFB]">{a.memo}</p>
+                      <div className="flex items-center gap-3 shrink-0 ml-4">
+                        <button 
+                          onPointerDownCapture={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onUpdateAssessment({ ...a, enabled: a.enabled === false });
+                          }}
+                          className={`w-8 h-4.5 rounded-full relative transition-all duration-200 ${a.enabled !== false ? 'bg-[var(--app-accent)]' : 'bg-[var(--app-divider)]'}`}
+                        >
+                          <motion.div 
+                            animate={{ x: a.enabled !== false ? 16 : 2 }}
+                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                            className="absolute top-0.5 left-0 w-3.5 h-3.5 bg-white rounded-full shadow-sm"
+                          />
+                        </button>
+                        <div className="text-right min-w-[3rem]">
+                          <p className={`font-bold text-base ${a.enabled === false ? 'text-[var(--app-muted)] line-through opacity-60' : 'text-[var(--app-text)]'}`}>{a.score}%</p>
+                        </div>
+                        <button 
+                          onPointerDownCapture={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteAssessment(a.id);
+                          }}
+                          className="p-1.5 text-[var(--app-soft)] hover:text-[var(--app-danger-text)] opacity-40 group-hover:opacity-100 transition-all flex-shrink-0"
+                        >
+                          <Trash2 size={15} />
+                        </button>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button 
-                        onPointerDownCapture={(e) => e.stopPropagation()}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onUpdateAssessment({ ...a, enabled: a.enabled === false });
-                        }}
-                        className={`w-9 h-5 rounded-full relative transition-all duration-200 ${a.enabled !== false ? 'bg-[#3182F6]' : 'bg-[#B0B8C1] dark:bg-[#333D4B]'}`}
-                      >
-                        <motion.div 
-                          animate={{ x: a.enabled !== false ? 18 : 2 }}
-                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                          className="absolute top-1 left-0 w-3 h-3 bg-white rounded-full shadow-sm"
-                        />
-                      </button>
-                      <div className="text-right min-w-[3.5rem]">
-                        <p className={`font-black text-lg transition-all ${a.enabled === false ? 'text-[#B0B8C1] line-through opacity-60' : 'dark:text-[#F9FAFB]'}`}>{a.score}%</p>
-                      </div>
-                      <button 
-                        onPointerDownCapture={(e) => e.stopPropagation()}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteAssessment(a.id);
-                        }}
-                        className="p-2 text-[#B0B8C1] hover:text-red-500 opacity-40 group-hover:opacity-100 transition-all"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </Reorder.Item>
-                ))}
-              </Reorder.Group>
-              {list.length === 0 && (
-                  <div className="surface-card-muted rounded-[26px] p-8 text-center text-[#8B95A1] text-base font-semibold leading-relaxed">
-                    {isFinalDisabled ? 'Enable Final Exam Mode to add scores.' : `No ${type.toLowerCase()} scores yet.`}
-                  </div>
-                )}
+                    </Reorder.Item>
+                  ))}
+                </Reorder.Group>
+              ) : (
+                <div className="bg-[var(--app-surface-muted)] rounded-[20px] p-6 text-center text-[var(--app-muted)] text-sm font-semibold border border-[var(--app-border)]">
+                  {isFinalDisabled ? 'Enable Final Exam Mode to add scores.' : `No ${type.toLowerCase()} scores yet.`}
+                </div>
+              )}
             </div>
           );
         })}
@@ -922,6 +1083,7 @@ function CourseDetail({
               onUpdateCourse(updated);
               setIsEditingCourse(false);
             }}
+            activeScale={activeScale}
           />
         )}
       </AnimatePresence>
@@ -1054,12 +1216,14 @@ function AddCourseModal({
   initialCourse,
   onClose, 
   onSave,
-  onAdd // For backward compatibility if needed, but we'll use onSave
+  onAdd, // For backward compatibility if needed, but we'll use onSave
+  activeScale
 }: { 
   initialCourse?: Course,
   onClose: () => void, 
   onSave?: (c: Course) => void,
-  onAdd?: (c: Course) => void
+  onAdd?: (c: Course) => void,
+  activeScale: SchoolScaleConfig
 }) {
   const [name, setName] = useState(initialCourse?.name || '');
   const [isAP, setIsAP] = useState(initialCourse?.isAP || false);
@@ -1130,12 +1294,6 @@ function AddCourseModal({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
-      if (isError) setIsError(false);
-      setTimeout(() => setIsError(true), 10);
-      setTimeout(() => setIsError(false), 800);
-      return;
-    }
 
     const courseData: Course = {
       id: initialCourse?.id || Date.now().toString(),
@@ -1156,20 +1314,21 @@ function AddCourseModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 backdrop-blur-md"
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-start overflow-y-auto bg-black/60 backdrop-blur-sm p-4 sm:p-6 pt-10 sm:pt-20"
       onClick={onClose}
     >
       <motion.div 
-        initial={{ y: "100%" }}
-        animate={{ y: 0 }}
-        exit={{ y: "100%" }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="sheet-panel space-y-8 max-h-[90dvh] overflow-y-auto custom-scrollbar"
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="modal-panel space-y-6 w-full mb-10"
         onClick={(e) => { e.stopPropagation(); setShowSuggestions(false); }}
       >
-        <div className="sticky top-0 bg-transparent backdrop-blur-xl z-20 -mt-2 pt-2">
-          <div className="mx-auto mb-6 h-1.5 w-12 rounded-full bg-slate-200 dark:bg-white/10" />
+        <div className="flex justify-between items-center sticky top-0 bg-transparent backdrop-blur-xl -mt-2 pt-2 z-10">
           <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">{initialCourse ? 'Edit Course' : 'Add New Course'}</h2>
+          <button onClick={onClose} className="icon-button h-10 w-10 -mr-1 text-[#8B95A1]">
+            <X size={24} />
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8 pb-8">
@@ -1245,7 +1404,7 @@ function AddCourseModal({
                 className="field-input w-full p-5 dark:text-[#F9FAFB] font-bold appearance-none cursor-pointer pr-12 text-lg"
               >
                 <option value="">Not Set</option>
-                {GRADE_SCALE.map(s => (
+                {activeScale.grades.map(s => (
                   <option key={s.grade} value={s.grade}>{s.grade} (Min {s.minScore}%)</option>
                 ))}
               </select>
@@ -1411,16 +1570,30 @@ function ResetModal({ onClose, onConfirm }: { onClose: () => void, onConfirm: ()
   );
 }
 
-function QuickGPAView() {
-  const [gradeCounts, setGradeCounts] = useState<SemesterGradeCount[]>(
-    GRADE_SCALE.map(s => ({ grade: s.grade, count: 0 }))
+function QuickGPAView({ 
+  activeScale,
+  activeScaleKey,
+  setActiveScaleKey
+}: { 
+  activeScale: SchoolScaleConfig;
+  activeScaleKey: SchoolScaleKey;
+  setActiveScaleKey: (key: SchoolScaleKey) => void;
+}) {
+  const [gradeCounts, setGradeCounts] = useState<SemesterGradeCount[]>(() =>
+    activeScale.grades.map(s => ({ grade: s.grade, count: 0 }))
   );
   const [showLowerGrades, setShowLowerGrades] = useState(false);
 
-  const calculatedGPA = useMemo(() => calculateSemesterGPA(gradeCounts), [gradeCounts]);
+  useEffect(() => {
+    setGradeCounts(activeScale.grades.map(s => ({ grade: s.grade, count: 0 })));
+  }, [activeScale]);
 
-  const priorityGrades: Grade[] = ['A+', 'A', 'A-', 'B+', 'B', 'B-'];
-  const lowerGrades: Grade[] = ['C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'];
+  const calculatedGPA = useMemo(() => calculateSemesterGPA(gradeCounts, activeScale), [gradeCounts, activeScale]);
+
+  const midIndex = Math.ceil(activeScale.grades.length / 2);
+  const priorityGrades = useMemo(() => activeScale.grades.slice(0, midIndex).map(s => s.grade), [activeScale, midIndex]);
+  const lowerGrades = useMemo(() => activeScale.grades.slice(midIndex).map(s => s.grade), [activeScale, midIndex]);
+
   const gradeMap = useMemo(
     () => new Map(gradeCounts.map(gc => [gc.grade, gc])),
     [gradeCounts]
@@ -1433,7 +1606,7 @@ function QuickGPAView() {
   };
 
   const clearAll = () => {
-    setGradeCounts(GRADE_SCALE.map(s => ({ grade: s.grade, count: 0 })));
+    setGradeCounts(activeScale.grades.map(s => ({ grade: s.grade, count: 0 })));
   };
 
   const renderGradeRow = (grade: Grade) => {
@@ -1443,12 +1616,12 @@ function QuickGPAView() {
     return (
       <div
         key={grade}
-        className={`grade-row grid h-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center rounded-[20px] px-3 py-2.5 ${
+        className={`grade-row grid h-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center rounded-[16px] px-3 py-2 ${
           isActive ? 'grade-row-active' : ''
         }`}
       >
         <div className="flex min-w-0 items-center">
-          <div className="w-9 text-[15px] font-black tracking-[-0.02em] text-[#5F6977] dark:text-[#C8D0DD]">
+          <div className="w-9 text-[15px] font-bold tracking-tight text-[var(--app-text)]">
             {grade}
           </div>
         </div>
@@ -1457,19 +1630,19 @@ function QuickGPAView() {
           <button
             type="button"
             onClick={() => handleUpdateCount(grade, -1)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EEF2F7] text-[#8B95A1] transition-colors hover:bg-[#E5E8EB] dark:bg-[#2C3440] dark:hover:bg-[#333D4B]"
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--app-surface-muted)] text-[var(--app-muted)] transition-colors hover:bg-[var(--app-divider)]"
           >
-            <Minus size={14} />
+            <Minus size={12} />
           </button>
-          <div className="min-w-[1.25rem] text-center text-[17px] font-black text-[#191F28] dark:text-[#F9FAFB]">
+          <div className="min-w-[1rem] text-center text-base font-bold text-[var(--app-text)]">
             {count}
           </div>
           <button
             type="button"
             onClick={() => handleUpdateCount(grade, 1)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#3182F6] text-white shadow-sm transition-colors hover:bg-[#1B64DA]"
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--app-accent)] text-white shadow-sm transition-colors hover:bg-[var(--app-accent-strong)]"
           >
-            <Plus size={14} />
+            <Plus size={12} />
           </button>
         </div>
       </div>
@@ -1481,22 +1654,20 @@ function QuickGPAView() {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="space-y-8"
+      className="space-y-6"
     >
-      <section className="text-center space-y-1.5">
-        <h2 className="text-2xl font-bold md:text-3xl dark:text-[#F9FAFB]">Quick GPA</h2>
-        <p className="text-sm md:text-base text-[#8B95A1] font-medium">Instantly calculate your semester GPA</p>
-      </section>
+      <GpaHeroCard 
+        gpa={calculatedGPA.toFixed(3)}
+        title="Quick GPA"
+        activeScale={activeScale}
+        isWeighted={false}
+        activeScaleKey={activeScaleKey}
+        setActiveScaleKey={setActiveScaleKey}
+        showScaleSelector={true}
+      />
 
-      <div className="surface-card p-5 md:p-8 rounded-[28px] md:rounded-[32px] space-y-5 md:space-y-8">
-        <div className="surface-card-strong space-y-3 rounded-[24px] px-5 py-4 md:space-y-5 md:rounded-[28px] md:px-6 md:py-6">
-          <div className="text-center space-y-0.5 md:space-y-1">
-            <p className="text-[10px] text-[#8B95A1] font-bold uppercase tracking-[0.2em] opacity-80">Calculated GPA</p>
-            <p className="text-4xl font-black text-[#3182F6] md:text-5xl">{calculatedGPA.toFixed(3)}</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 auto-rows-fr items-stretch gap-2 md:gap-3">
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 auto-rows-fr items-stretch gap-2.5">
           {priorityGrades.map(renderGradeRow)}
         </div>
 
@@ -1504,13 +1675,13 @@ function QuickGPAView() {
           <button
             type="button"
             onClick={() => setShowLowerGrades(prev => !prev)}
-            className="grade-row flex w-full items-center justify-between gap-4 px-3 py-2.5 text-left"
+            className="grade-row flex w-full items-center justify-between gap-4 px-3 py-2 text-left"
             aria-label={showLowerGrades ? 'Hide lower grades' : 'Show lower grades'}
           >
-            <span className="text-sm font-bold text-[#8B95A1]">More grades</span>
+            <span className="text-sm font-bold text-[var(--app-muted)]">More grades</span>
             <ChevronDown
-              size={20}
-              className={`shrink-0 text-[#8B95A1] transition-transform ${showLowerGrades ? 'rotate-180' : ''}`}
+              size={18}
+              className={`shrink-0 text-[var(--app-soft)] transition-transform ${showLowerGrades ? 'rotate-180' : ''}`}
             />
           </button>
 
@@ -1522,7 +1693,7 @@ function QuickGPAView() {
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden"
               >
-                <div className="grid grid-cols-2 auto-rows-fr items-stretch gap-2 pt-2.5">
+                <div className="grid grid-cols-2 auto-rows-fr items-stretch gap-2.5 pt-2.5">
                   {lowerGrades.map(renderGradeRow)}
                 </div>
               </motion.div>
@@ -1532,22 +1703,92 @@ function QuickGPAView() {
 
         <button 
           onClick={clearAll}
-          className="danger-button w-full py-3.5 flex items-center justify-center gap-2"
+          className="danger-button w-full py-4 flex items-center justify-center gap-2"
         >
           <Trash2 size={20} />
           Clear All Counts
         </button>
       </div>
 
-      <div className="surface-card-muted p-4 md:p-6 rounded-[24px] border border-blue-100/80 dark:border-blue-900/20">
-        <div className="flex gap-3">
-          <AlertCircle className="text-[#3182F6] shrink-0" size={20} />
-          <p className="text-sm text-blue-900 dark:text-blue-200 leading-relaxed">
+      <div className="bg-[var(--app-surface-muted)] p-4 rounded-[20px] border border-[var(--app-border)]">
+        <div className="flex gap-2.5">
+          <AlertCircle className="text-[var(--app-accent)] shrink-0" size={18} />
+          <p className="text-xs text-[var(--app-muted)] leading-relaxed">
             <strong>Quick GPA</strong> is for instant calculations only. Your inputs here are not saved to your history. To keep a record of your GPA, use the <strong>Cumulative GPA</strong> section.
           </p>
         </div>
       </div>
     </motion.div>
+  );
+}
+function SemesterReorderItem({
+  semester,
+  onTap,
+  onDelete
+}: {
+  semester: SemesterGPA;
+  onTap: () => void;
+  onDelete: () => void;
+}) {
+  const dragControls = useDragControls();
+  const isReorderingRef = useRef(false);
+
+  return (
+    <Reorder.Item
+      value={semester}
+      dragListener={false}
+      dragControls={dragControls}
+      whileDrag={{ scale: 1.02, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)" }}
+      onDragStart={() => {
+        isReorderingRef.current = true;
+      }}
+      onDragEnd={() => {
+        window.setTimeout(() => {
+          isReorderingRef.current = false;
+        }, 0);
+      }}
+      onTap={() => {
+        if (isReorderingRef.current) return;
+        onTap();
+      }}
+      className="apple-list-row bg-[var(--app-surface)] group select-none relative z-10"
+    >
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        <button
+          type="button"
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            dragControls.start(e);
+          }}
+          className="flex items-center justify-center p-2 -ml-2 text-[var(--app-soft)] hover:text-[var(--app-accent)] cursor-grab active:cursor-grabbing touch-none transition-colors flex-shrink-0"
+          aria-label="Reorder semester"
+        >
+          <GripVertical size={16} />
+        </button>
+        <div className="w-8 h-8 rounded-lg bg-[var(--app-surface-muted)] flex items-center justify-center text-[var(--app-accent)] border border-[var(--app-border)] flex-shrink-0">
+          <BarChart3 size={16} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h4 className="font-semibold text-sm text-[var(--app-text)] leading-tight break-words">{semester.label}</h4>
+          <p className="text-[11px] text-[var(--app-muted)] mt-0.5 break-words">{semester.semester}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-3 shrink-0 ml-4">
+        <div className="text-right">
+          <p className="text-base font-bold text-[var(--app-accent)]">{semester.gpa.toFixed(3)}</p>
+        </div>
+        <button 
+          onPointerDownCapture={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }} 
+          className="icon-button h-7 w-7 text-[var(--app-soft)] hover:text-[var(--app-danger-text)] transition-colors"
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
+    </Reorder.Item>
   );
 }
 
@@ -1556,84 +1797,74 @@ function CumulativeView({
   onAddSemester, 
   onUpdateSemester,
   onDeleteSemester,
-  onReorder
+  onReorder,
+  activeScale,
+  cumulativeGPAVal,
+  activeScaleKey,
+  setActiveScaleKey,
+  isWeighted
 }: { 
-  semesters: SemesterGPA[], 
-  onAddSemester: (s: SemesterGPA) => void,
-  onUpdateSemester: (s: SemesterGPA) => void,
-  onDeleteSemester: (id: string) => void,
-  onReorder: (newSemesters: SemesterGPA[]) => void
+  semesters: SemesterGPA[];
+  onAddSemester: (s: SemesterGPA) => void;
+  onUpdateSemester: (s: SemesterGPA) => void;
+  onDeleteSemester: (id: string) => void;
+  onReorder: (newSemesters: SemesterGPA[]) => void;
+  activeScale: SchoolScaleConfig;
+  cumulativeGPAVal: string;
+  activeScaleKey: SchoolScaleKey;
+  setActiveScaleKey: (key: SchoolScaleKey) => void;
+  isWeighted: boolean;
 }) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingSemester, setEditingSemester] = useState<SemesterGPA | null>(null);
-
-  const totalGPA = useMemo(() => {
-    if (semesters.length === 0) return 0;
-    return semesters.reduce((acc, s) => acc + s.gpa, 0) / semesters.length;
-  }, [semesters]);
 
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="space-y-8"
+      className="space-y-6"
     >
-      <section className="text-center space-y-2">
-        <h2 className="text-3xl font-bold dark:text-[#F9FAFB]">Cumulative GPA</h2>
-        <p className="text-[#8B95A1] font-medium">Overall Average: <span className="text-[#3182F6] font-black">{totalGPA.toFixed(3)}</span></p>
-      </section>
+      <GpaHeroCard 
+        gpa={cumulativeGPAVal}
+        title="Cumulative GPA"
+        activeScale={activeScale}
+        isWeighted={isWeighted}
+        activeScaleKey={activeScaleKey}
+        setActiveScaleKey={setActiveScaleKey}
+        showScaleSelector={true}
+      />
 
-      <div className="grid gap-4">
-        <Reorder.Group axis="y" values={semesters} onReorder={onReorder} className="grid gap-4">
-          {semesters.map(s => (
-            <Reorder.Item key={s.id} value={s}>
-              <div 
-                onClick={() => setEditingSemester(s)}
-                className="surface-card p-5 rounded-[28px] flex items-center justify-between cursor-pointer group hover:bg-[#F9FAFB] dark:hover:bg-[#1A1A1E] transition-all"
-              >
-                <div className="flex items-center gap-4">
-                  <GripVertical size={20} className="text-[#B0B8C1] cursor-grab active:cursor-grabbing" />
-                  <div className="surface-card-muted w-12 h-12 rounded-xl flex items-center justify-center text-[#3182F6]">
-                    <BarChart3 size={24} />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-lg dark:text-[#F9FAFB]">{s.label}</h4>
-                    <p className="text-sm text-[#8B95A1] font-medium">{s.semester}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-2xl font-black text-[#3182F6]">{s.gpa.toFixed(3)}</p>
-                  </div>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteSemester(s.id);
-                    }} 
-                    className="icon-button h-10 w-10 text-[#B0B8C1] hover:text-red-500 transition-colors"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
-            </Reorder.Item>
-          ))}
-        </Reorder.Group>
-
-        {semesters.length === 0 && (
-          <div className="surface-card-muted text-center py-12 text-[#8B95A1] border-2 border-dashed border-slate-200/80 dark:border-white/8 rounded-[30px]">
+      <div className="space-y-4">
+        {semesters.length > 0 ? (
+          <Reorder.Group 
+            axis="y" 
+            values={semesters} 
+            onReorder={onReorder} 
+            className="apple-list bg-[var(--app-surface)]"
+          >
+            {semesters.map(s => (
+              <SemesterReorderItem 
+                key={s.id} 
+                semester={s}
+                onTap={() => setEditingSemester(s)}
+                onDelete={() => onDeleteSemester(s.id)}
+              />
+            ))}
+          </Reorder.Group>
+        ) : (
+          <div className="bg-[var(--app-surface-muted)] text-center py-12 text-[var(--app-muted)] border border-dashed border-[var(--app-border-strong)] rounded-[24px]">
             <History size={48} className="mx-auto mb-4 opacity-20" />
-            <p>No historical data yet.</p>
+            <p className="font-bold">No historical data yet.</p>
             <p className="text-sm">Add your past semesters to track progress.</p>
           </div>
         )}
 
         <button 
           onClick={() => setIsAdding(true)}
-          className="primary-button w-full py-5 flex items-center justify-center gap-3"
+          className="primary-button w-full py-4 flex items-center justify-center gap-2"
         >
-          <Plus size={20} />
+          <Plus size={18} />
           Add Semester
         </button>
       </div>
@@ -1655,6 +1886,7 @@ function CumulativeView({
               setIsAdding(false);
               setEditingSemester(null);
             }}
+            activeScale={activeScale}
           />
         )}
       </AnimatePresence>
@@ -1665,21 +1897,31 @@ function CumulativeView({
 function AddSemesterModal({ 
   onClose, 
   onSave,
-  initialSemester
+  initialSemester,
+  activeScale
 }: { 
   onClose: () => void, 
   onSave: (s: SemesterGPA) => void,
-  initialSemester?: SemesterGPA
+  initialSemester?: SemesterGPA,
+  activeScale: SchoolScaleConfig
 }) {
   const [label, setLabel] = useState(initialSemester?.label || '9th Grade');
   const [semester, setSemester] = useState(initialSemester?.semester || '1st Semester');
   const [gpa, setGpa] = useState(initialSemester?.gpa.toString() || '');
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(!!initialSemester?.gradeCounts);
-  const [gradeCounts, setGradeCounts] = useState<SemesterGradeCount[]>(
-    initialSemester?.gradeCounts || GRADE_SCALE.map(s => ({ grade: s.grade, count: 0 }))
+  const [gradeCounts, setGradeCounts] = useState<SemesterGradeCount[]>(() =>
+    initialSemester?.gradeCounts || activeScale.grades.map(s => ({ grade: s.grade, count: 0 }))
   );
 
-  const calculatedGPA = useMemo(() => calculateSemesterGPA(gradeCounts), [gradeCounts]);
+  useEffect(() => {
+    if (initialSemester?.gradeCounts) {
+      setGradeCounts(initialSemester.gradeCounts);
+    } else {
+      setGradeCounts(activeScale.grades.map(s => ({ grade: s.grade, count: 0 })));
+    }
+  }, [initialSemester, activeScale]);
+
+  const calculatedGPA = useMemo(() => calculateSemesterGPA(gradeCounts, activeScale), [gradeCounts, activeScale]);
 
   const handleUpdateCount = (grade: Grade, delta: number) => {
     setGradeCounts(prev => prev.map(gc => 

@@ -1,4 +1,4 @@
-import { Course, GRADE_SCALE, Grade, Assessment } from '../types';
+import { Course, Grade, Assessment, SchoolScaleConfig } from '../types';
 
 /**
  * Calculates the current percentage for a course based on assessments.
@@ -49,26 +49,26 @@ export function calculateCurrentPercentage(course: Course): number {
 /**
  * Determines the letter grade based on percentage.
  */
-export function getLetterGrade(percentage: number): Grade {
-  for (const scale of GRADE_SCALE) {
+export function getLetterGrade(percentage: number, activeScale: SchoolScaleConfig): Grade {
+  for (const scale of activeScale.grades) {
     if (percentage >= scale.minScore) return scale.grade;
   }
-  return 'F';
+  return activeScale.grades[activeScale.grades.length - 1]?.grade || 'F';
 }
 
 /**
  * Calculates the Grade Point for a single course.
- * AP Weighting: +1.0 if Grade >= C- (70%) and isWeighted is true
+ * AP Weighting: extra point if isWeighted is true and percentage >= minAPWeightScore
  */
-export function calculateGradePoint(course: Course, isWeighted: boolean): number {
+export function calculateGradePoint(course: Course, isWeighted: boolean, activeScale: SchoolScaleConfig): number {
   const percentage = calculateCurrentPercentage(course);
-  const letterGrade = getLetterGrade(percentage);
+  const letterGrade = getLetterGrade(percentage, activeScale);
   
-  const scale = GRADE_SCALE.find(s => s.grade === letterGrade);
+  const scale = activeScale.grades.find(s => s.grade === letterGrade);
   let gp = scale ? scale.gpa : 0;
 
-  if (isWeighted && course.isAP && percentage >= 69.5) {
-    gp += 1.0;
+  if (isWeighted && course.isAP && percentage >= activeScale.minAPWeightScore) {
+    gp += activeScale.apWeight;
   }
 
   return gp;
@@ -78,8 +78,8 @@ export function calculateGradePoint(course: Course, isWeighted: boolean): number
  * Calculates the required score for the NEXT Summative exam to reach a target grade.
  * Maintains current Summative average and calculates for one additional Summative.
  */
-export function calculateNextScoreNeeded(course: Course, targetGrade: Grade): { score: number | null, message?: string } {
-  const targetScale = GRADE_SCALE.find(s => s.grade === targetGrade);
+export function calculateNextScoreNeeded(course: Course, targetGrade: Grade, activeScale: SchoolScaleConfig): { score: number | null, message?: string } {
+  const targetScale = activeScale.grades.find(s => s.grade === targetGrade);
   if (!targetScale) return { score: null };
   const targetScore = targetScale.minScore;
 
@@ -133,12 +133,12 @@ export function calculateNextScoreNeeded(course: Course, targetGrade: Grade): { 
 /**
  * Calculates GPA from a list of grade counts (e.g., A: 5, B: 2)
  */
-export function calculateSemesterGPA(gradeCounts: { grade: Grade, count: number }[]): number {
+export function calculateSemesterGPA(gradeCounts: { grade: Grade, count: number }[], activeScale: SchoolScaleConfig): number {
   let totalPoints = 0;
   let totalCount = 0;
 
   for (const gc of gradeCounts) {
-    const scale = GRADE_SCALE.find(s => s.grade === gc.grade);
+    const scale = activeScale.grades.find(s => s.grade === gc.grade);
     if (scale) {
       totalPoints += scale.gpa * gc.count;
       totalCount += gc.count;
