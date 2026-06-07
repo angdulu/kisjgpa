@@ -29,11 +29,12 @@ This optimizer implements the exact mathematical logic of KISJ's academic system
 
 ---
 
-## ⚡ Technical Highlights
+## ⚡ Technical Highlights & Design System
 
-- **Dynamic Validation UX:** Implements visual "shake" feedback animations when score input patterns violate formatting rules.
-- **Local-First Privacy:** All student grades, course titles, and semester histories are stored client-side in browser `localStorage`. No data is ever transmitted to external servers, ensuring absolute privacy.
-- **UI Responsiveness:** Custom lightweight animations (motion states, modal transitions) designed for quick, single-tap entry on mobile devices in retail or classroom environments.
+- **Cupertino Design System:** Overhauled the styling to align with Apple's clean design language. Features HSL color tokens, thin borders, flat segmented controller elements, centered pop-up modals, and a custom circular SVG GPA progress ring.
+- **Dynamic Validation UX:** Implements responsive error-shake animations when score inputs violate range thresholds, alongside AP/Honors course badge indicators. Caps unweighted GPA calculations strictly at `4.0` while maintaining the `4.5` limit for weighted GPAs.
+- **Robust Local-First Privacy:** All student grades, optional course titles, and semester histories are stored client-side in browser `localStorage`. No data is ever transmitted to external servers, ensuring absolute privacy and zero network dependence.
+- **UI Responsiveness:** Custom lightweight transitions designed for quick, lag-free entry on mobile devices, utilizing optimized layout properties (like `flex-1 min-w-0`) to prevent text collisions.
 
 ---
 
