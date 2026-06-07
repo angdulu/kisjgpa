@@ -869,7 +869,7 @@ function CourseDetail({
           <div className="space-y-3">
             <div className="flex justify-between items-end">
               <div className="flex items-center gap-1.5">
-                <Target size={14} className={isExceeding ? "text-emerald-500" : "var(--app-accent)"} />
+                <Target size={14} className={isExceeding ? "text-emerald-500" : "text-[var(--app-accent)]"} />
                 <span className="text-[10px] font-bold text-[var(--app-muted)] uppercase tracking-wider">Target Progress</span>
               </div>
               <span className={`text-xs font-bold ${isExceeding ? "text-emerald-500" : "text-[var(--app-accent)]"}`}>
@@ -910,11 +910,12 @@ function CourseDetail({
         </div>
         <button 
           onClick={toggleFinalMode}
-          className={`w-11 h-6 rounded-full transition-colors relative ${course.hasFinal ? 'bg-[var(--app-accent)]' : 'bg-[var(--app-soft)]/20 dark:bg-white/10'}`}
+          className={`w-11 h-6 rounded-full transition-colors relative ${course.hasFinal ? 'bg-[var(--app-accent)]' : 'bg-[var(--app-soft)]/20 dark:bg-white/10'} cursor-pointer active:scale-[0.98]`}
         >
           <motion.div 
-            animate={{ x: course.hasFinal ? 22 : 2 }}
-            className="absolute top-1 left-0 w-4 h-4 bg-white rounded-full shadow-sm"
+            animate={{ x: course.hasFinal ? 20 : 0 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm"
           />
         </button>
       </div>
@@ -994,12 +995,12 @@ function CourseDetail({
                             e.stopPropagation();
                             onUpdateAssessment({ ...a, enabled: a.enabled === false });
                           }}
-                          className={`w-8 h-4.5 rounded-full relative transition-all duration-200 ${a.enabled !== false ? 'bg-[var(--app-accent)]' : 'bg-[var(--app-divider)]'}`}
+                          className={`w-8 h-4.5 rounded-full relative transition-all duration-200 ${a.enabled !== false ? 'bg-[var(--app-accent)]' : 'bg-[var(--app-divider)]'} cursor-pointer active:scale-[0.98]`}
                         >
                           <motion.div 
-                            animate={{ x: a.enabled !== false ? 16 : 2 }}
+                            animate={{ x: a.enabled !== false ? 14 : 0 }}
                             transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                            className="absolute top-0.5 left-0 w-3.5 h-3.5 bg-white rounded-full shadow-sm"
+                            className="absolute top-0.5 left-0.5 w-3.5 h-3.5 bg-white rounded-full shadow-sm"
                           />
                         </button>
                         <div className="text-right min-w-[3rem]">
@@ -1386,11 +1387,12 @@ function AddCourseModal({
             <button 
               type="button"
               onClick={() => setIsAP(!isAP)}
-                className={`w-14 h-7 rounded-full transition-colors relative ${isAP ? 'bg-[#3182F6]' : 'bg-[#B0B8C1] dark:bg-[#334155]'}`}
+              className={`w-14 h-7 rounded-full transition-colors relative ${isAP ? 'bg-[var(--app-accent)]' : 'bg-[var(--app-soft)]/20 dark:bg-white/10'} cursor-pointer active:scale-[0.98]`}
             >
               <motion.div 
-                animate={{ x: isAP ? 28 : 2 }}
-                className="absolute top-1 left-0 w-5 h-5 bg-white rounded-full shadow-sm"
+                animate={{ x: isAP ? 28 : 0 }}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                className="absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-sm"
               />
             </button>
           </div>

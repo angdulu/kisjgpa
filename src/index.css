@@ -12,8 +12,9 @@
     --app-text: #1d1d1f;
     --app-muted: #86868b;
     --app-soft: #aeaeb2;
-    --app-accent: #0071e3;
-    --app-accent-strong: #0054a6;
+    --app-accent: #147efb;
+    --app-accent-strong: #0c63d4;
+    --app-accent-focus: rgba(20, 126, 251, 0.15);
     --app-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
     --app-shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.02);
     --app-frame-bg: #f5f5f7;
@@ -24,8 +25,8 @@
     --app-segment-active-bg: #ffffff;
     --app-secondary-bg: #e3e3e6;
     --app-secondary-text: #48484a;
-    --app-danger-bg: #ffeef0;
-    --app-danger-text: #ff3b30;
+    --app-danger-bg: #fff5f5;
+    --app-danger-text: #ff453a;
     --app-input-bg: #ffffff;
     --app-input-border: #d1d1d6;
     --app-input-shadow: none;
@@ -48,7 +49,8 @@
       --app-muted: #86868b;
       --app-soft: #48484a;
       --app-accent: #2997ff;
-      --app-accent-strong: #0071e3;
+      --app-accent-strong: #147efb;
+      --app-accent-focus: rgba(41, 151, 255, 0.15);
       --app-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
       --app-shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.2);
       --app-frame-bg: #0a0a0c;
@@ -59,7 +61,7 @@
       --app-segment-active-bg: #2c2c2e;
       --app-secondary-bg: #1c1c1e;
       --app-secondary-text: #86868b;
-      --app-danger-bg: rgba(255, 69, 58, 0.15);
+      --app-danger-bg: rgba(255, 69, 58, 0.12);
       --app-danger-text: #ff453a;
       --app-input-bg: #1c1c1e;
       --app-input-border: rgba(255, 255, 255, 0.1);
@@ -105,6 +107,9 @@
     --app-text: #f5f5f7;
     --app-muted: #86868b;
     --app-soft: #48484a;
+    --app-accent: #2997ff;
+    --app-accent-strong: #147efb;
+    --app-accent-focus: rgba(41, 151, 255, 0.15);
     --app-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     --app-shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.2);
     --app-frame-bg: #0a0a0c;
@@ -115,7 +120,7 @@
     --app-segment-active-bg: #2c2c2e;
     --app-secondary-bg: #1c1c1e;
     --app-secondary-text: #86868b;
-    --app-danger-bg: rgba(255, 69, 58, 0.15);
+    --app-danger-bg: rgba(255, 69, 58, 0.12);
     --app-danger-text: #ff453a;
     --app-input-bg: #1c1c1e;
     --app-input-border: rgba(255, 255, 255, 0.1);
@@ -211,7 +216,7 @@
   }
 
   .icon-button {
-    @apply flex items-center justify-center rounded-xl transition-all duration-150;
+    @apply flex items-center justify-center rounded-xl transition-all duration-150 active:scale-[0.98] cursor-pointer;
     background: var(--app-icon-bg);
     border: 1px solid var(--app-border);
     color: var(--app-text);
@@ -219,7 +224,6 @@
 
   .icon-button:hover {
     background: var(--app-icon-hover);
-    transform: translateY(-0.5px);
   }
 
   .segmented-shell {
@@ -229,7 +233,7 @@
   }
 
   .segmented-option {
-    @apply px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all cursor-pointer;
+    @apply px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all cursor-pointer active:scale-[0.98];
     color: var(--app-secondary-text);
   }
 
@@ -241,39 +245,37 @@
 
   .primary-button {
     background: var(--app-accent);
-    @apply text-white font-bold rounded-2xl transition-all shadow-sm;
+    @apply text-white font-bold rounded-2xl transition-all shadow-sm active:scale-[0.98] cursor-pointer;
   }
 
   .primary-button:hover {
     background: var(--app-accent-strong);
-    transform: translateY(-0.5px);
   }
 
   .secondary-button {
-    @apply rounded-2xl font-bold transition-all;
+    @apply rounded-2xl font-bold transition-all active:scale-[0.98] cursor-pointer;
     background: var(--app-secondary-bg);
     border: 1px solid var(--app-border);
     color: var(--app-secondary-text);
   }
 
+  .secondary-button:hover {
+    background: var(--app-icon-hover);
+  }
+
   .danger-button {
-    @apply rounded-2xl font-bold transition-all duration-150;
+    @apply rounded-2xl font-bold transition-all duration-150 active:scale-[0.98] cursor-pointer;
     background: var(--app-danger-bg);
     color: var(--app-danger-text);
   }
 
   .danger-button:hover {
     opacity: 0.9;
-    transform: translateY(-0.5px);
-  }
-
-  .danger-button:active {
-    transform: translateY(0) scale(0.99);
   }
 
   .danger-button:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
+    box-shadow: 0 0 0 3px rgba(255, 69, 58, 0.15);
   }
 
   .field-input {
@@ -284,7 +286,7 @@
 
   .field-input:focus {
     border-color: var(--app-accent);
-    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+    box-shadow: 0 0 0 3px var(--app-accent-focus);
   }
 
   .modal-panel {
