@@ -43,7 +43,8 @@ export function calculateCurrentPercentage(course: Course): number {
   }
 
   if (totalWeightUsed === 0) return 0;
-  return totalWeightedScore / totalWeightUsed;
+  const rawPercentage = totalWeightedScore / totalWeightUsed;
+  return Math.round(rawPercentage * 1e10) / 1e10;
 }
 
 /**

@@ -1728,6 +1728,7 @@ function SemesterReorderItem({
   onTap,
   onDelete
 }: {
+  key?: React.Key;
   semester: SemesterGPA;
   onTap: () => void;
   onDelete: () => void;
