@@ -170,7 +170,7 @@ function GpaHeroCard({
   setActiveScaleKey?: (key: SchoolScaleKey) => void;
   showScaleSelector?: boolean;
 }) {
-  const maxGPA = (activeScaleKey === 'KISJ' && isWeighted !== false) ? 4.5 : 4.0;
+  const maxGPA = isWeighted ? 5.0 : 4.0;
   const gpaNumber = parseFloat(gpa);
   const percentage = isNaN(gpaNumber) ? 0 : (gpaNumber / maxGPA) * 100;
   const radius = 32;
