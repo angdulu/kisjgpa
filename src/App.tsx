@@ -25,7 +25,8 @@ import {
   X,
   History,
   BarChart3,
-  GripVertical
+  GripVertical,
+  RefreshCw
 } from 'lucide-react';
 import { Course, Grade, Assessment, AssessmentType, SemesterGPA, SemesterGradeCount, SchoolScaleKey, SchoolScaleConfig, SCHOOL_SCALES } from './types';
 import { 
@@ -329,56 +330,30 @@ export default function App() {
     localStorage.setItem('kisj-gpa-weighted', JSON.stringify(isWeighted));
   }, [isWeighted]);
 
-  // Sync coursesMap GPA updates to cumulativeGPAs
-  useEffect(() => {
-    setCumulativeGPAs(prev => {
-      let updated = [...prev];
-      let changed = false;
+  const getCalculatedSemesterGPA = (label: string, semester: string) => {
+    const semKey = `${label} - ${semester}`;
+    const semCourses = coursesMap[semKey] || [];
+    if (semCourses.length === 0) return null;
+    const totalPoints = semCourses.reduce((acc, c) => acc + (calculateGradePoint(c, isWeighted, activeScale) * (c.credit || 1.0)), 0);
+    const totalCredits = semCourses.reduce((acc, c) => acc + (c.credit || 1.0), 0);
+    return totalCredits > 0 ? totalPoints / totalCredits : 0;
+  };
 
-      for (const sem of SEMESTERS_LIST) {
-        const semKey = `${sem.label} - ${sem.semester}`;
-        const semCourses = coursesMap[semKey] || [];
-        
-        if (semCourses.length > 0) {
-          const totalPoints = semCourses.reduce((acc, c) => acc + (calculateGradePoint(c, isWeighted, activeScale) * (c.credit || 1.0)), 0);
-          const totalCredits = semCourses.reduce((acc, c) => acc + (c.credit || 1.0), 0);
-          const calculatedGPA = totalCredits > 0 ? totalPoints / totalCredits : 0;
-          
-          const existingIndex = updated.findIndex(s => s.label === sem.label && s.semester === sem.semester);
-          
-          if (existingIndex >= 0) {
-            const existing = updated[existingIndex];
-            if (Math.abs(existing.gpa - calculatedGPA) > 0.0001 || !existing.isTracked) {
-              updated[existingIndex] = {
-                ...existing,
-                gpa: calculatedGPA,
-                isTracked: true
-              };
-              changed = true;
-            }
-          } else {
-            updated.push({
-              id: `tracked-${semKey}`,
-              label: sem.label,
-              semester: sem.semester,
-              gpa: calculatedGPA,
-              isTracked: true
-            });
-            changed = true;
-          }
-        } else {
-          // If no courses are left for this semester, but we have a tracked entry in cumulativeGPAs, we should remove it.
-          const existingIndex = updated.findIndex(s => s.label === sem.label && s.semester === sem.semester && s.isTracked);
-          if (existingIndex >= 0) {
-            updated.splice(existingIndex, 1);
-            changed = true;
-          }
+  const syncSemesterGPA = (id: string) => {
+    setCumulativeGPAs(prev => prev.map(s => {
+      if (s.id === id) {
+        const calculated = getCalculatedSemesterGPA(s.label, s.semester);
+        if (calculated !== null) {
+          return {
+            ...s,
+            gpa: calculated,
+            isTracked: true
+          };
         }
       }
-
-      return changed ? updated : prev;
-    });
-  }, [coursesMap, isWeighted, activeScale]);
+      return s;
+    }));
+  };
 
   const selectedCourse = useMemo(() => 
     courses.find(c => c.id === selectedCourseId), 
@@ -497,11 +472,11 @@ export default function App() {
               <div className="flex flex-col">
                 <span className="section-kicker">Academic Planner</span>
                 {activeTab === 'current' ? (
-                  <div className="relative flex items-center gap-1">
+                  <div className="relative flex items-center mt-1 bg-[var(--app-surface-muted)] hover:bg-[var(--app-icon-bg)] border border-[var(--app-border)] pl-3.5 pr-8 py-1 rounded-full transition-colors cursor-pointer w-fit max-w-[200px] sm:max-w-none">
                     <select
                       value={activeSemester}
                       onChange={(e) => setActiveSemester(e.target.value)}
-                      className="appearance-none bg-transparent hover:text-[var(--app-accent)] text-base sm:text-xl font-extrabold tracking-tight text-[var(--app-text)] outline-none cursor-pointer transition-colors pr-5"
+                      className="appearance-none bg-transparent hover:text-[var(--app-accent)] text-[13px] sm:text-sm font-bold text-[var(--app-text)] outline-none cursor-pointer transition-colors w-full"
                     >
                       {SEMESTERS_LIST.map((sem) => {
                         const semKey = `${sem.label} - ${sem.semester}`;
@@ -512,7 +487,7 @@ export default function App() {
                         );
                       })}
                     </select>
-                    <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-[var(--app-muted)] pointer-events-none" size={12} />
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--app-muted)] pointer-events-none" size={12} />
                   </div>
                 ) : (
                   <h1 className="text-base sm:text-xl font-extrabold tracking-tight">
@@ -579,6 +554,13 @@ export default function App() {
                   activeScaleKey={activeScaleKey}
                   setActiveScaleKey={setActiveScaleKey}
                   isWeighted={isWeighted}
+                  coursesMap={coursesMap}
+                  onSyncSemester={syncSemesterGPA}
+                  getCalculatedGPA={getCalculatedSemesterGPA}
+                  onGoToTerm={(label, semStr) => {
+                    setActiveSemester(`${label} - ${semStr}`);
+                    setActiveTab('current');
+                  }}
                 />
               ) : (
                 <QuickGPAView 
@@ -1869,12 +1851,16 @@ function QuickGPAView({
 function SemesterReorderItem({
   semester,
   onTap,
-  onDelete
+  onDelete,
+  onSync,
+  hasTrackerData
 }: {
   key?: React.Key;
   semester: SemesterGPA;
   onTap: () => void;
   onDelete: () => void;
+  onSync?: () => void;
+  hasTrackerData?: boolean;
 }) {
   const dragControls = useDragControls();
   const isReorderingRef = useRef(false);
@@ -1897,7 +1883,7 @@ function SemesterReorderItem({
         if (isReorderingRef.current) return;
         onTap();
       }}
-      className="apple-list-row bg-[var(--app-surface)] group select-none relative z-10"
+      className="apple-list-row bg-[var(--app-surface)] group select-none relative z-10 cursor-pointer"
     >
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <button
@@ -1930,6 +1916,22 @@ function SemesterReorderItem({
         <div className="text-right">
           <p className="text-base font-bold text-[var(--app-accent)]">{semester.gpa.toFixed(3)}</p>
         </div>
+        
+        {semester.isTracked && hasTrackerData && onSync && (
+          <button
+            type="button"
+            onPointerDownCapture={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSync();
+            }}
+            className="icon-button h-7 w-7 text-[var(--app-soft)] hover:text-[var(--app-accent)] hover:rotate-180 transition-all duration-300 flex items-center justify-center"
+            title="Sync with Term Tracker"
+          >
+            <RefreshCw size={13} />
+          </button>
+        )}
+
         <button 
           onPointerDownCapture={(e) => e.stopPropagation()}
           onClick={(e) => {
@@ -1940,6 +1942,8 @@ function SemesterReorderItem({
         >
           <Trash2 size={14} />
         </button>
+
+        <ChevronRight size={18} className="text-[var(--app-soft)] group-hover:text-[var(--app-accent)] transition-colors shrink-0" />
       </div>
     </Reorder.Item>
   );
@@ -1955,7 +1959,11 @@ function CumulativeView({
   cumulativeGPAVal,
   activeScaleKey,
   setActiveScaleKey,
-  isWeighted
+  isWeighted,
+  coursesMap,
+  onSyncSemester,
+  getCalculatedGPA,
+  onGoToTerm
 }: { 
   semesters: SemesterGPA[];
   onAddSemester: (s: SemesterGPA) => void;
@@ -1967,6 +1975,10 @@ function CumulativeView({
   activeScaleKey: SchoolScaleKey;
   setActiveScaleKey: (key: SchoolScaleKey) => void;
   isWeighted: boolean;
+  coursesMap: Record<string, Course[]>;
+  onSyncSemester: (id: string) => void;
+  getCalculatedGPA: (label: string, semester: string) => number | null;
+  onGoToTerm: (label: string, semester: string) => void;
 }) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingSemester, setEditingSemester] = useState<SemesterGPA | null>(null);
@@ -1996,14 +2008,26 @@ function CumulativeView({
             onReorder={onReorder} 
             className="apple-list bg-[var(--app-surface)]"
           >
-            {semesters.map(s => (
-              <SemesterReorderItem 
-                key={s.id} 
-                semester={s}
-                onTap={() => setEditingSemester(s)}
-                onDelete={() => onDeleteSemester(s.id)}
-              />
-            ))}
+            {semesters.map(s => {
+              const semKey = `${s.label} - ${s.semester}`;
+              const hasTrackerData = (coursesMap[semKey] || []).length > 0;
+              return (
+                <SemesterReorderItem 
+                  key={s.id} 
+                  semester={s}
+                  onTap={() => {
+                    if (s.isTracked) {
+                      onGoToTerm(s.label, s.semester);
+                    } else {
+                      setEditingSemester(s);
+                    }
+                  }}
+                  onDelete={() => onDeleteSemester(s.id)}
+                  onSync={() => onSyncSemester(s.id)}
+                  hasTrackerData={hasTrackerData}
+                />
+              );
+            })}
           </Reorder.Group>
         ) : (
           <div className="bg-[var(--app-surface-muted)] text-center py-12 text-[var(--app-muted)] border border-dashed border-[var(--app-border-strong)] rounded-[24px]">
@@ -2039,13 +2063,9 @@ function CumulativeView({
               setIsAdding(false);
               setEditingSemester(null);
             }}
-            onGoToTerm={(label, semester) => {
-              setActiveSemester(`${label} - ${semester}`);
-              setActiveTab('current');
-              setIsAdding(false);
-              setEditingSemester(null);
-            }}
+            onGoToTerm={onGoToTerm}
             activeScale={activeScale}
+            getCalculatedGPA={getCalculatedGPA}
           />
         )}
       </AnimatePresence>
@@ -2058,13 +2078,15 @@ function AddSemesterModal({
   onSave,
   onGoToTerm,
   initialSemester,
-  activeScale
+  activeScale,
+  getCalculatedGPA
 }: { 
   onClose: () => void, 
   onSave: (s: SemesterGPA) => void,
   onGoToTerm?: (label: string, semester: string) => void,
   initialSemester?: SemesterGPA,
-  activeScale: SchoolScaleConfig
+  activeScale: SchoolScaleConfig,
+  getCalculatedGPA?: (label: string, semester: string) => number | null
 }) {
   const [label, setLabel] = useState(initialSemester?.label || '9th Grade');
   const [semester, setSemester] = useState(initialSemester?.semester || '1st Semester');
@@ -2073,8 +2095,7 @@ function AddSemesterModal({
   const [gradeCounts, setGradeCounts] = useState<SemesterGradeCount[]>(() =>
     initialSemester?.gradeCounts || activeScale.grades.map(s => ({ grade: s.grade, count: 0 }))
   );
-
-  const isTracked = !!initialSemester?.isTracked;
+  const [isTracked, setIsTracked] = useState(initialSemester?.isTracked || false);
 
   useEffect(() => {
     if (initialSemester?.gradeCounts) {
@@ -2085,6 +2106,13 @@ function AddSemesterModal({
   }, [initialSemester, activeScale]);
 
   const calculatedGPA = useMemo(() => calculateSemesterGPA(gradeCounts, activeScale), [gradeCounts, activeScale]);
+  const calculatedFromTracker = getCalculatedGPA ? getCalculatedGPA(label, semester) : null;
+
+  useEffect(() => {
+    if (calculatedFromTracker === null) {
+      setIsTracked(false);
+    }
+  }, [label, semester, calculatedFromTracker]);
 
   const handleUpdateCount = (grade: Grade, delta: number) => {
     setGradeCounts(prev => prev.map(gc => 
@@ -2094,7 +2122,7 @@ function AddSemesterModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const finalGPA = isCalculatorOpen ? calculatedGPA : parseFloat(gpa);
+    const finalGPA = isTracked ? parseFloat(gpa) : (isCalculatorOpen ? calculatedGPA : parseFloat(gpa));
     if (isNaN(finalGPA)) return;
 
     onSave({
@@ -2102,7 +2130,8 @@ function AddSemesterModal({
       label,
       semester,
       gpa: finalGPA,
-      gradeCounts: isCalculatorOpen ? gradeCounts : undefined
+      gradeCounts: (isCalculatorOpen && !isTracked) ? gradeCounts : undefined,
+      isTracked: isTracked
     });
   };
 
@@ -2138,24 +2167,41 @@ function AddSemesterModal({
               </div>
               <div>
                 <p className="text-xs text-[#8B95A1] font-bold uppercase mb-1">Calculated GPA</p>
-                <p className="text-5xl font-black text-[#3182F6]">{initialSemester?.gpa.toFixed(3)}</p>
+                <p className="text-5xl font-black text-[#3182F6]">{parseFloat(gpa).toFixed(3)}</p>
               </div>
               <div className="text-xs text-[#8B95A1] font-medium leading-relaxed bg-[var(--app-surface)] p-4 rounded-2xl border border-[var(--app-border)] text-center">
                 This semester is automatically calculated from the courses and assessments tracked in your Term View.
               </div>
             </div>
 
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setIsTracked(false)}
+                className="secondary-button flex-1 py-4 text-base"
+              >
+                Unlink
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  if (onGoToTerm) {
+                    onGoToTerm(label, semester);
+                  }
+                }}
+                className="primary-button flex-1 py-4 text-base flex items-center justify-center gap-2"
+              >
+                <Calendar size={18} />
+                Go to Tracker
+              </button>
+            </div>
+
             <button 
               type="button"
-              onClick={() => {
-                if (onGoToTerm) {
-                  onGoToTerm(label, semester);
-                }
-              }}
-              className="primary-button w-full py-4 text-base flex items-center justify-center gap-2"
+              onClick={handleSubmit}
+              className="primary-button w-full py-4 text-base bg-emerald-600 hover:bg-emerald-700 text-white"
             >
-              <Calendar size={18} />
-              Go to Term Tracker
+              Save Semester
             </button>
           </div>
         ) : (
@@ -2182,6 +2228,26 @@ function AddSemesterModal({
                     {['1st Semester', '2nd Semester'].map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
+
+              {calculatedFromTracker !== null && (
+                <div className="surface-card-muted p-4 rounded-2xl border border-[var(--app-border)] flex items-center justify-between gap-4 mb-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-[var(--app-muted)] uppercase tracking-wider">Tracker Data Found</p>
+                    <p className="text-sm font-semibold text-[var(--app-text)] mt-0.5">Calculated GPA: <span className="text-[#3182F6] font-extrabold">{calculatedFromTracker.toFixed(3)}</span></p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGpa(calculatedFromTracker.toFixed(3));
+                      setIsTracked(true);
+                      setIsCalculatorOpen(false);
+                    }}
+                    className="px-3 py-1.5 text-xs font-bold bg-[#3182F6] text-white rounded-lg hover:bg-[#1C68D4] transition-colors shrink-0"
+                  >
+                    Import & Link
+                  </button>
+                </div>
+              )}
 
               <div className="border-t border-slate-200/80 dark:border-white/8 pt-6 space-y-4">
                 <div className="flex items-center justify-between mb-2">
