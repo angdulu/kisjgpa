@@ -2082,6 +2082,7 @@ function AddSemesterModal({
     initialSemester?.gradeCounts || activeScale.grades.map(s => ({ grade: s.grade, count: 0 }))
   );
   const [isTracked, setIsTracked] = useState(initialSemester?.isTracked || false);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     if (initialSemester?.gradeCounts) {
@@ -2108,8 +2109,24 @@ function AddSemesterModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const finalGPA = isTracked ? parseFloat(gpa) : (isCalculatorOpen ? calculatedGPA : parseFloat(gpa));
-    if (isNaN(finalGPA)) return;
+    
+    let finalGPA = 0;
+    if (isTracked) {
+      finalGPA = parseFloat(gpa);
+    } else if (isCalculatorOpen) {
+      finalGPA = calculatedGPA;
+    } else {
+      const gpaTrimmed = gpa.trim();
+      const isValid = /^[0-9]+(\.[0-9]+)?$/.test(gpaTrimmed);
+      const parsed = parseFloat(gpaTrimmed);
+      
+      if (!isValid || isNaN(parsed) || parsed < 0 || parsed > 5) {
+        setHasError(false);
+        setTimeout(() => setHasError(true), 10);
+        return;
+      }
+      finalGPA = parsed;
+    }
 
     onSave({
       id: initialSemester?.id || Date.now().toString(),
@@ -2282,15 +2299,23 @@ function AddSemesterModal({
                 ) : (
                   <div className="space-y-2">
                     <label className="text-[12px] font-bold text-[#8B95A1] uppercase tracking-widest">Manual GPA</label>
-                    <input 
-                      type="number" 
-                      step="0.01"
-                      min="0"
-                      max="5"
+                    <motion.input 
+                      type="text" 
+                      inputMode="decimal"
+                      pattern="[0-9]*\.?[0-9]*"
+                      step="any"
                       value={gpa}
-                      onChange={e => setGpa(e.target.value)}
+                      onChange={e => {
+                        setGpa(e.target.value);
+                        if (hasError) setHasError(false);
+                      }}
+                      onFocus={e => e.target.select()}
+                      animate={hasError ? { x: [-10, 10, -10, 10, -10, 10, 0] } : {}}
+                      transition={{ duration: 0.5, ease: "easeInOut" }}
                       placeholder="e.g. 3.5"
-                      className="field-input w-full p-5 dark:text-[#F9FAFB] font-bold text-lg"
+                      className={`field-input w-full p-5 dark:text-[#F9FAFB] font-bold text-lg border-2 ${
+                        hasError ? 'border-[#FF3B30] bg-[#FFF5F5] dark:bg-red-950/30' : 'border-transparent'
+                      }`}
                     />
                   </div>
                 )}
