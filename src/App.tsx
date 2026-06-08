@@ -504,9 +504,10 @@ export default function App() {
                     >
                       {SEMESTERS_LIST.map((sem) => {
                         const semKey = `${sem.label} - ${sem.semester}`;
+                        const hasCourses = coursesMap[semKey] && coursesMap[semKey].length > 0;
                         return (
                           <option key={semKey} value={semKey} className="bg-[var(--app-surface)] text-[var(--app-text)] text-sm font-semibold">
-                            {semKey}
+                            {semKey}{hasCourses ? ' •' : ''}
                           </option>
                         );
                       })}
