@@ -473,7 +473,7 @@ export default function App() {
       <div className="app-frame">
         
         {/* Header */}
-        <header className="glass-header px-6 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-5 flex items-center justify-between">
+        <header className="glass-header px-4 sm:px-6 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-5 flex items-center justify-between">
           {selectedCourseId ? (
             <div className="flex items-center justify-between w-full">
               <button 
@@ -497,11 +497,11 @@ export default function App() {
               <div className="flex flex-col">
                 <span className="section-kicker">Academic Planner</span>
                 {activeTab === 'current' ? (
-                  <div className="relative flex items-center gap-1.5">
+                  <div className="relative flex items-center gap-1">
                     <select
                       value={activeSemester}
                       onChange={(e) => setActiveSemester(e.target.value)}
-                      className="appearance-none bg-transparent hover:text-[var(--app-accent)] text-xl font-extrabold tracking-tight text-[var(--app-text)] outline-none cursor-pointer transition-colors pr-6"
+                      className="appearance-none bg-transparent hover:text-[var(--app-accent)] text-base sm:text-xl font-extrabold tracking-tight text-[var(--app-text)] outline-none cursor-pointer transition-colors pr-5"
                     >
                       {SEMESTERS_LIST.map((sem) => {
                         const semKey = `${sem.label} - ${sem.semester}`;
@@ -512,10 +512,10 @@ export default function App() {
                         );
                       })}
                     </select>
-                    <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-[var(--app-muted)] pointer-events-none" size={14} />
+                    <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-[var(--app-muted)] pointer-events-none" size={12} />
                   </div>
                 ) : (
-                  <h1 className="text-xl font-extrabold tracking-tight">
+                  <h1 className="text-base sm:text-xl font-extrabold tracking-tight">
                     {activeTab === 'cumulative' ? 'Cumulative' : 'Quick GPA'}
                   </h1>
                 )}
