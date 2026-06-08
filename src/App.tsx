@@ -249,7 +249,14 @@ export default function App() {
   const [coursesMap, setCoursesMap] = useState<Record<string, Course[]>>(() => {
     const savedMap = localStorage.getItem('kisj-gpa-courses-map');
     if (savedMap) {
-      return JSON.parse(savedMap);
+      try {
+        const parsed = JSON.parse(savedMap);
+        if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+          return parsed;
+        }
+      } catch (e) {
+        console.error("Failed to parse courses map:", e);
+      }
     }
     // Migration logic
     const oldSavedCourses = localStorage.getItem('kisj-gpa-courses');
@@ -317,10 +324,6 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('kisj-gpa-active-semester', activeSemester);
   }, [activeSemester]);
-
-  useEffect(() => {
-    localStorage.setItem('kisj-gpa-courses', JSON.stringify(courses));
-  }, [courses]);
 
   useEffect(() => {
     localStorage.setItem('kisj-gpa-weighted', JSON.stringify(isWeighted));
