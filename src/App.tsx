@@ -141,6 +141,17 @@ const COURSE_ALIASES: Record<string, string[]> = {
   "hist": ["AP World History", "AP US History", "US History", "Global Studies 9", "Global Studies 10"],
 };
 
+const SEMESTERS_LIST = [
+  { label: '9th Grade', semester: '1st Semester' },
+  { label: '9th Grade', semester: '2nd Semester' },
+  { label: '10th Grade', semester: '1st Semester' },
+  { label: '10th Grade', semester: '2nd Semester' },
+  { label: '11th Grade', semester: '1st Semester' },
+  { label: '11th Grade', semester: '2nd Semester' },
+  { label: '12th Grade', semester: '1st Semester' },
+  { label: '12th Grade', semester: '2nd Semester' },
+];
+
 function GpaHeroCard({
   gpa,
   title,
@@ -229,10 +240,49 @@ function GpaHeroCard({
 }
 
 export default function App() {
-  const [courses, setCourses] = useState<Course[]>(() => {
-    const saved = localStorage.getItem('kisj-gpa-courses');
-    return saved ? JSON.parse(saved) : INITIAL_COURSES;
+  const [activeSemester, setActiveSemester] = useState<string>(() => {
+    const saved = localStorage.getItem('kisj-gpa-active-semester');
+    return saved || '12th Grade - 1st Semester';
   });
+
+  const [coursesMap, setCoursesMap] = useState<Record<string, Course[]>>(() => {
+    const savedMap = localStorage.getItem('kisj-gpa-courses-map');
+    if (savedMap) {
+      return JSON.parse(savedMap);
+    }
+    // Migration logic
+    const oldSavedCourses = localStorage.getItem('kisj-gpa-courses');
+    if (oldSavedCourses) {
+      try {
+        const parsedOld = JSON.parse(oldSavedCourses);
+        if (Array.isArray(parsedOld) && parsedOld.length > 0) {
+          const defaultSem = localStorage.getItem('kisj-gpa-active-semester') || '12th Grade - 1st Semester';
+          return {
+            [defaultSem]: parsedOld
+          };
+        }
+      } catch (e) {
+        console.error("Failed to parse legacy courses:", e);
+      }
+    }
+    return {};
+  });
+
+  const courses = useMemo(() => {
+    return coursesMap[activeSemester] || [];
+  }, [coursesMap, activeSemester]);
+
+  const setCourses = (update: Course[] | ((prev: Course[]) => Course[])) => {
+    setCoursesMap(prevMap => {
+      const currentCourses = prevMap[activeSemester] || [];
+      const nextCourses = typeof update === 'function' ? update(currentCourses) : update;
+      return {
+        ...prevMap,
+        [activeSemester]: nextCourses
+      };
+    });
+  };
+
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [isAddingCourse, setIsAddingCourse] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
@@ -260,6 +310,14 @@ export default function App() {
   }, [activeScaleKey]);
 
   useEffect(() => {
+    localStorage.setItem('kisj-gpa-courses-map', JSON.stringify(coursesMap));
+  }, [coursesMap]);
+
+  useEffect(() => {
+    localStorage.setItem('kisj-gpa-active-semester', activeSemester);
+  }, [activeSemester]);
+
+  useEffect(() => {
     localStorage.setItem('kisj-gpa-courses', JSON.stringify(courses));
   }, [courses]);
 
@@ -270,6 +328,57 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('kisj-gpa-weighted', JSON.stringify(isWeighted));
   }, [isWeighted]);
+
+  // Sync coursesMap GPA updates to cumulativeGPAs
+  useEffect(() => {
+    setCumulativeGPAs(prev => {
+      let updated = [...prev];
+      let changed = false;
+
+      for (const sem of SEMESTERS_LIST) {
+        const semKey = `${sem.label} - ${sem.semester}`;
+        const semCourses = coursesMap[semKey] || [];
+        
+        if (semCourses.length > 0) {
+          const totalPoints = semCourses.reduce((acc, c) => acc + (calculateGradePoint(c, isWeighted, activeScale) * (c.credit || 1.0)), 0);
+          const totalCredits = semCourses.reduce((acc, c) => acc + (c.credit || 1.0), 0);
+          const calculatedGPA = totalCredits > 0 ? totalPoints / totalCredits : 0;
+          
+          const existingIndex = updated.findIndex(s => s.label === sem.label && s.semester === sem.semester);
+          
+          if (existingIndex >= 0) {
+            const existing = updated[existingIndex];
+            if (Math.abs(existing.gpa - calculatedGPA) > 0.0001 || !existing.isTracked) {
+              updated[existingIndex] = {
+                ...existing,
+                gpa: calculatedGPA,
+                isTracked: true
+              };
+              changed = true;
+            }
+          } else {
+            updated.push({
+              id: `tracked-${semKey}`,
+              label: sem.label,
+              semester: sem.semester,
+              gpa: calculatedGPA,
+              isTracked: true
+            });
+            changed = true;
+          }
+        } else {
+          // If no courses are left for this semester, but we have a tracked entry in cumulativeGPAs, we should remove it.
+          const existingIndex = updated.findIndex(s => s.label === sem.label && s.semester === sem.semester && s.isTracked);
+          if (existingIndex >= 0) {
+            updated.splice(existingIndex, 1);
+            changed = true;
+          }
+        }
+      }
+
+      return changed ? updated : prev;
+    });
+  }, [coursesMap, isWeighted, activeScale]);
 
   const selectedCourse = useMemo(() => 
     courses.find(c => c.id === selectedCourseId), 
@@ -297,7 +406,6 @@ export default function App() {
     setCourses(prev => prev.filter(c => c.id !== id));
   };
 
-
   const addAssessment = (courseId: string, assessment: Assessment) => {
     setCourses(prev => prev.map(c => 
       c.id === courseId 
@@ -322,13 +430,12 @@ export default function App() {
     ));
   };
   const resetData = () => {
-    setCourses(INITIAL_COURSES);
+    setCoursesMap({});
     setCumulativeGPAs([]);
     setIsResetting(false);
     setSelectedCourseId(null);
     setIsSidebarOpen(false);
   };
-
 
   const addSemesterGPA = (data: SemesterGPA) => {
     setCumulativeGPAs([...cumulativeGPAs, data]);
@@ -339,7 +446,19 @@ export default function App() {
   };
 
   const deleteSemesterGPA = (id: string) => {
-    setCumulativeGPAs(cumulativeGPAs.filter(s => s.id !== id));
+    const sem = cumulativeGPAs.find(s => s.id === id);
+    if (sem && sem.isTracked) {
+      if (window.confirm(`Deleting this semester will also delete all of its tracked courses. Continue?`)) {
+        setCoursesMap(prev => {
+          const next = { ...prev };
+          delete next[`${sem.label} - ${sem.semester}`];
+          return next;
+        });
+        setCumulativeGPAs(cumulativeGPAs.filter(s => s.id !== id));
+      }
+    } else {
+      setCumulativeGPAs(cumulativeGPAs.filter(s => s.id !== id));
+    }
   };
 
   const cumulativeGPAVal = useMemo(() => {
@@ -347,6 +466,7 @@ export default function App() {
     const sum = cumulativeGPAs.reduce((acc, s) => acc + s.gpa, 0);
     return (sum / cumulativeGPAs.length).toFixed(3);
   }, [cumulativeGPAs]);
+
 
   return (
     <div className="app-shell font-sans">
@@ -376,13 +496,33 @@ export default function App() {
               </button>
               <div className="flex flex-col">
                 <span className="section-kicker">Academic Planner</span>
-                <h1 className="text-xl font-extrabold tracking-tight">
-                  {activeTab === 'current' ? 'Term View' : activeTab === 'cumulative' ? 'Cumulative' : 'Quick GPA'}
-                </h1>
+                {activeTab === 'current' ? (
+                  <div className="relative flex items-center gap-1.5">
+                    <select
+                      value={activeSemester}
+                      onChange={(e) => setActiveSemester(e.target.value)}
+                      className="appearance-none bg-transparent hover:text-[var(--app-accent)] text-xl font-extrabold tracking-tight text-[var(--app-text)] outline-none cursor-pointer transition-colors pr-6"
+                    >
+                      {SEMESTERS_LIST.map((sem) => {
+                        const semKey = `${sem.label} - ${sem.semester}`;
+                        return (
+                          <option key={semKey} value={semKey} className="bg-[var(--app-surface)] text-[var(--app-text)] text-sm font-semibold">
+                            {semKey}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-[var(--app-muted)] pointer-events-none" size={14} />
+                  </div>
+                ) : (
+                  <h1 className="text-xl font-extrabold tracking-tight">
+                    {activeTab === 'cumulative' ? 'Cumulative' : 'Quick GPA'}
+                  </h1>
+                )}
               </div>
             </div>
           )}
-          {!selectedCourseId && activeTab === 'current' && (
+          {!selectedCourseId && (activeTab === 'current' || activeTab === 'cumulative') && (
             <div className="flex items-center gap-3">
               <div className="segmented-shell flex items-center">
                 <button 
@@ -425,6 +565,7 @@ export default function App() {
                   isWeighted={isWeighted}
                   activeScaleKey={activeScaleKey}
                   setActiveScaleKey={setActiveScaleKey}
+                  activeSemester={activeSemester}
                 />
               ) : activeTab === 'cumulative' ? (
                 <CumulativeView 
@@ -583,13 +724,13 @@ function Sidebar({
         </nav>
 
         <div className="pt-6 border-t border-[var(--app-border)] space-y-4">
-          <div className="flex flex-col gap-1.5 px-3">
-            <label className="text-[10px] font-bold text-[var(--app-muted)] uppercase tracking-wider">School Scale</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold text-[var(--app-muted)] uppercase tracking-wider px-3">School Scale</label>
             <div className="relative">
               <select
                 value={activeScaleKey}
                 onChange={(e) => onChangeActiveScaleKey(e.target.value as SchoolScaleKey)}
-                className="w-full p-3 pr-10 bg-[var(--app-surface-muted)] text-[var(--app-text)] rounded-xl font-bold border border-[var(--app-border)] outline-none cursor-pointer text-sm appearance-none"
+                className="w-full py-2.5 pl-3.5 pr-10 bg-[var(--app-surface-muted)] text-[var(--app-text)] rounded-xl font-bold border border-[var(--app-border)] outline-none cursor-pointer text-sm appearance-none"
               >
                 {Object.values(SCHOOL_SCALES).map((scale) => (
                   <option key={scale.key} value={scale.key} className="bg-[var(--app-surface)] text-[var(--app-text)]">
@@ -603,7 +744,7 @@ function Sidebar({
 
           <button 
             onClick={onReset}
-            className="danger-button w-full p-3.5 flex items-center justify-center gap-2"
+            className="danger-button w-full p-3 flex items-center justify-center gap-2"
           >
             <Trash2 size={18} />
             Reset All Data
@@ -725,7 +866,8 @@ function CurrentTermView({
   overallGPA,
   isWeighted,
   activeScaleKey,
-  setActiveScaleKey
+  setActiveScaleKey,
+  activeSemester
 }: { 
   courses: Course[];
   onSelectCourse: (id: string) => void;
@@ -735,6 +877,7 @@ function CurrentTermView({
   isWeighted: boolean;
   activeScaleKey: SchoolScaleKey;
   setActiveScaleKey: (key: SchoolScaleKey) => void;
+  activeSemester: string;
 }) {
   return (
     <motion.div
@@ -745,7 +888,7 @@ function CurrentTermView({
     >
       <GpaHeroCard 
         gpa={overallGPA}
-        title="Current GPA"
+        title={`${activeSemester} GPA`}
         activeScale={activeScale}
         isWeighted={isWeighted}
         activeScaleKey={activeScaleKey}
@@ -1772,7 +1915,14 @@ function SemesterReorderItem({
           <BarChart3 size={16} />
         </div>
         <div className="min-w-0 flex-1">
-          <h4 className="font-semibold text-sm text-[var(--app-text)] leading-tight break-words">{semester.label}</h4>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h4 className="font-semibold text-sm text-[var(--app-text)] leading-tight break-words">{semester.label}</h4>
+            {semester.isTracked && (
+              <span className="text-[9px] font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded tracking-wider uppercase flex-shrink-0">
+                Tracked
+              </span>
+            )}
+          </div>
           <p className="text-[11px] text-[var(--app-muted)] mt-0.5 break-words">{semester.semester}</p>
         </div>
       </div>
@@ -1889,6 +2039,12 @@ function CumulativeView({
               setIsAdding(false);
               setEditingSemester(null);
             }}
+            onGoToTerm={(label, semester) => {
+              setActiveSemester(`${label} - ${semester}`);
+              setActiveTab('current');
+              setIsAdding(false);
+              setEditingSemester(null);
+            }}
             activeScale={activeScale}
           />
         )}
@@ -1900,11 +2056,13 @@ function CumulativeView({
 function AddSemesterModal({ 
   onClose, 
   onSave,
+  onGoToTerm,
   initialSemester,
   activeScale
 }: { 
   onClose: () => void, 
   onSave: (s: SemesterGPA) => void,
+  onGoToTerm?: (label: string, semester: string) => void,
   initialSemester?: SemesterGPA,
   activeScale: SchoolScaleConfig
 }) {
@@ -1915,6 +2073,8 @@ function AddSemesterModal({
   const [gradeCounts, setGradeCounts] = useState<SemesterGradeCount[]>(() =>
     initialSemester?.gradeCounts || activeScale.grades.map(s => ({ grade: s.grade, count: 0 }))
   );
+
+  const isTracked = !!initialSemester?.isTracked;
 
   useEffect(() => {
     if (initialSemester?.gradeCounts) {
@@ -1962,105 +2122,137 @@ function AddSemesterModal({
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center sticky top-0 bg-transparent backdrop-blur-xl -mt-2 pt-2 z-10">
-          <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">Add Semester</h2>
+          <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">
+            {isTracked ? 'Tracked Semester' : initialSemester ? 'Edit Semester' : 'Add Semester'}
+          </h2>
           <button onClick={onClose} className="icon-button h-10 w-10 -mr-1 text-[#8B95A1]">
             <X size={24} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-[12px] font-bold text-[#8B95A1] uppercase tracking-widest">Grade</label>
-              <select 
-                value={label}
-                onChange={e => setLabel(e.target.value)}
-                className="field-input w-full p-4 dark:text-[#F9FAFB] font-bold"
-              >
-                {['9th Grade', '10th Grade', '11th Grade', '12th Grade'].map(g => <option key={g} value={g}>{g}</option>)}
-              </select>
+        {isTracked ? (
+          <div className="space-y-6">
+            <div className="surface-card-muted p-6 rounded-[28px] text-center space-y-4">
+              <div className="text-sm font-bold text-[var(--app-muted)] uppercase tracking-widest">
+                {label} • {semester}
+              </div>
+              <div>
+                <p className="text-xs text-[#8B95A1] font-bold uppercase mb-1">Calculated GPA</p>
+                <p className="text-5xl font-black text-[#3182F6]">{initialSemester?.gpa.toFixed(3)}</p>
+              </div>
+              <div className="text-xs text-[#8B95A1] font-medium leading-relaxed bg-[var(--app-surface)] p-4 rounded-2xl border border-[var(--app-border)] text-center">
+                This semester is automatically calculated from the courses and assessments tracked in your Term View.
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[12px] font-bold text-[#8B95A1] uppercase tracking-widest">Semester</label>
-              <select 
-                value={semester}
-                onChange={e => setSemester(e.target.value)}
-                className="field-input w-full p-4 dark:text-[#F9FAFB] font-bold"
-              >
-                  {['1st Semester', '2nd Semester'].map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-
-            <div className="border-t border-slate-200/80 dark:border-white/8 pt-6 space-y-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-bold dark:text-[#F9FAFB]">GPA Input Method</span>
-                <button 
-                  type="button"
-                  onClick={() => setIsCalculatorOpen(!isCalculatorOpen)}
-                  className="text-sm font-bold text-[#3182F6] hover:underline"
+            <button 
+              type="button"
+              onClick={() => {
+                if (onGoToTerm) {
+                  onGoToTerm(label, semester);
+                }
+              }}
+              className="primary-button w-full py-4 text-base flex items-center justify-center gap-2"
+            >
+              <Calendar size={18} />
+              Go to Term Tracker
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[12px] font-bold text-[#8B95A1] uppercase tracking-widest">Grade</label>
+                <select 
+                  value={label}
+                  onChange={e => setLabel(e.target.value)}
+                  className="field-input w-full p-4 dark:text-[#F9FAFB] font-bold"
                 >
-                  {isCalculatorOpen ? 'Switch to Direct Input' : 'Use Grade Assistant'}
-                </button>
+                  {['9th Grade', '10th Grade', '11th Grade', '12th Grade'].map(g => <option key={g} value={g}>{g}</option>)}
+                </select>
               </div>
 
-              {isCalculatorOpen ? (
-                <div className="surface-card-muted space-y-6 p-5 rounded-[28px]">
-                   <div className="text-center">
-                    <p className="text-xs text-[#8B95A1] font-bold uppercase mb-1">Calculated GPA</p>
-                    <p className="text-4xl font-black text-[#3182F6]">{calculatedGPA.toFixed(3)}</p>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    {gradeCounts.map(gc => (
-                      <div key={gc.grade} className="surface-card flex items-center justify-between p-3 rounded-2xl">
-                        <span className="font-black text-sm dark:text-[#F9FAFB]">{gc.grade}</span>
-                        <div className="flex items-center gap-3">
-                          <button 
-                            type="button"
-                            onClick={() => handleUpdateCount(gc.grade, -1)}
-                            className="surface-card-muted w-6 h-6 flex items-center justify-center rounded-lg text-[#8B95A1]"
-                          >
-                            -
-                          </button>
-                          <span className="font-bold text-sm min-w-[12px] text-center">{gc.count}</span>
-                          <button 
-                            type="button"
-                            onClick={() => handleUpdateCount(gc.grade, 1)}
-                            className="w-6 h-6 flex items-center justify-center bg-[#3182F6] rounded-lg text-white"
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <label className="text-[12px] font-bold text-[#8B95A1] uppercase tracking-widest">Manual GPA</label>
-                  <input 
-                    type="number" 
-                    step="0.01"
-                    min="0"
-                    max="5"
-                    value={gpa}
-                    onChange={e => setGpa(e.target.value)}
-                    placeholder="e.g. 3.5"
-                    className="field-input w-full p-5 dark:text-[#F9FAFB] font-bold text-lg"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
+              <div className="space-y-2">
+                <label className="text-[12px] font-bold text-[#8B95A1] uppercase tracking-widest">Semester</label>
+                <select 
+                  value={semester}
+                  onChange={e => setSemester(e.target.value)}
+                  className="field-input w-full p-4 dark:text-[#F9FAFB] font-bold"
+                >
+                    {['1st Semester', '2nd Semester'].map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
 
-          <button 
-            type="submit"
-            className="primary-button w-full py-5 text-lg"
-          >
-            Save Semester
-          </button>
-        </form>
+              <div className="border-t border-slate-200/80 dark:border-white/8 pt-6 space-y-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-bold dark:text-[#F9FAFB]">GPA Input Method</span>
+                  <button 
+                    type="button"
+                    onClick={() => setIsCalculatorOpen(!isCalculatorOpen)}
+                    className="text-sm font-bold text-[#3182F6] hover:underline"
+                  >
+                    {isCalculatorOpen ? 'Switch to Direct Input' : 'Use Grade Assistant'}
+                  </button>
+                </div>
+
+                {isCalculatorOpen ? (
+                  <div className="surface-card-muted space-y-6 p-5 rounded-[28px]">
+                     <div className="text-center">
+                      <p className="text-xs text-[#8B95A1] font-bold uppercase mb-1">Calculated GPA</p>
+                      <p className="text-4xl font-black text-[#3182F6]">{calculatedGPA.toFixed(3)}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      {gradeCounts.map(gc => (
+                        <div key={gc.grade} className="surface-card flex items-center justify-between p-3 rounded-2xl">
+                          <span className="font-black text-sm dark:text-[#F9FAFB]">{gc.grade}</span>
+                          <div className="flex items-center gap-3">
+                            <button 
+                              type="button"
+                              onClick={() => handleUpdateCount(gc.grade, -1)}
+                              className="surface-card-muted w-6 h-6 flex items-center justify-center rounded-lg text-[#8B95A1]"
+                            >
+                              -
+                            </button>
+                            <span className="font-bold text-sm min-w-[12px] text-center">{gc.count}</span>
+                            <button 
+                              type="button"
+                              onClick={() => handleUpdateCount(gc.grade, 1)}
+                              className="w-6 h-6 flex items-center justify-center bg-[#3182F6] rounded-lg text-white"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="text-[12px] font-bold text-[#8B95A1] uppercase tracking-widest">Manual GPA</label>
+                    <input 
+                      type="number" 
+                      step="0.01"
+                      min="0"
+                      max="5"
+                      value={gpa}
+                      onChange={e => setGpa(e.target.value)}
+                      placeholder="e.g. 3.5"
+                      className="field-input w-full p-5 dark:text-[#F9FAFB] font-bold text-lg"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <button 
+              type="submit"
+              className="primary-button w-full py-5 text-lg"
+            >
+              Save Semester
+            </button>
+          </form>
+        )}
       </motion.div>
     </motion.div>,
     document.body

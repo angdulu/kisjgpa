@@ -94,4 +94,6 @@ export interface SemesterGPA {
   semester: string; // e.g., "1st Semester"
   gpa: number;
   gradeCounts?: SemesterGradeCount[]; // Optional: for the "Calculate from Grades" feature
+  isTracked?: boolean; // Optional: whether this semester is tracked via active courses
 }
+
