@@ -323,12 +323,61 @@ export default function App() {
   }, [courses]);
 
   useEffect(() => {
+    localStorage.setItem('kisj-gpa-weighted', JSON.stringify(isWeighted));
+  }, [isWeighted]);
+
+  useEffect(() => {
     localStorage.setItem('kisj-gpa-cumulative', JSON.stringify(cumulativeGPAs));
   }, [cumulativeGPAs]);
 
+  // Auto-sync tracker data to cumulative GPAs
   useEffect(() => {
-    localStorage.setItem('kisj-gpa-weighted', JSON.stringify(isWeighted));
-  }, [isWeighted]);
+    setCumulativeGPAs(prev => {
+      let updated = false;
+      const nextSemesters = [...prev];
+
+      for (const sem of SEMESTERS_LIST) {
+        const semKey = `${sem.label} - ${sem.semester}`;
+        const semCourses = coursesMap[semKey] || [];
+
+        if (semCourses.length > 0) {
+          const totalPoints = semCourses.reduce((acc, c) => acc + (calculateGradePoint(c, isWeighted, activeScale) * (c.credit || 1.0)), 0);
+          const totalCredits = semCourses.reduce((acc, c) => acc + (c.credit || 1.0), 0);
+          const calculated = totalCredits > 0 ? totalPoints / totalCredits : 0;
+
+          const existingIndex = nextSemesters.findIndex(s => s.label === sem.label && s.semester === sem.semester);
+          if (existingIndex >= 0) {
+            const existing = nextSemesters[existingIndex];
+            if (Math.abs(existing.gpa - calculated) > 1e-4 || !existing.isTracked) {
+              nextSemesters[existingIndex] = {
+                ...existing,
+                gpa: calculated,
+                isTracked: true
+              };
+              updated = true;
+            }
+          } else {
+            nextSemesters.push({
+              id: `tracked-${semKey}`,
+              label: sem.label,
+              semester: sem.semester,
+              gpa: calculated,
+              isTracked: true
+            });
+            updated = true;
+          }
+        } else {
+          const existingIndex = nextSemesters.findIndex(s => s.label === sem.label && s.semester === sem.semester && s.isTracked);
+          if (existingIndex >= 0) {
+            nextSemesters.splice(existingIndex, 1);
+            updated = true;
+          }
+        }
+      }
+
+      return updated ? nextSemesters : prev;
+    });
+  }, [coursesMap, isWeighted, activeScale]);
 
   const getCalculatedSemesterGPA = (label: string, semester: string) => {
     const semKey = `${label} - ${semester}`;
@@ -337,22 +386,6 @@ export default function App() {
     const totalPoints = semCourses.reduce((acc, c) => acc + (calculateGradePoint(c, isWeighted, activeScale) * (c.credit || 1.0)), 0);
     const totalCredits = semCourses.reduce((acc, c) => acc + (c.credit || 1.0), 0);
     return totalCredits > 0 ? totalPoints / totalCredits : 0;
-  };
-
-  const syncSemesterGPA = (id: string) => {
-    setCumulativeGPAs(prev => prev.map(s => {
-      if (s.id === id) {
-        const calculated = getCalculatedSemesterGPA(s.label, s.semester);
-        if (calculated !== null) {
-          return {
-            ...s,
-            gpa: calculated,
-            isTracked: true
-          };
-        }
-      }
-      return s;
-    }));
   };
 
   const selectedCourse = useMemo(() => 
@@ -542,8 +575,6 @@ export default function App() {
                   activeScaleKey={activeScaleKey}
                   setActiveScaleKey={setActiveScaleKey}
                   isWeighted={isWeighted}
-                  coursesMap={coursesMap}
-                  onSyncSemester={syncSemesterGPA}
                   getCalculatedGPA={getCalculatedSemesterGPA}
                   onGoToTerm={(label, semStr) => {
                     setActiveSemester(`${label} - ${semStr}`);
@@ -1839,16 +1870,12 @@ function QuickGPAView({
 function SemesterReorderItem({
   semester,
   onTap,
-  onDelete,
-  onSync,
-  hasTrackerData
+  onDelete
 }: {
   key?: React.Key;
   semester: SemesterGPA;
   onTap: () => void;
   onDelete: () => void;
-  onSync?: () => void;
-  hasTrackerData?: boolean;
 }) {
   const dragControls = useDragControls();
   const isReorderingRef = useRef(false);
@@ -1905,21 +1932,6 @@ function SemesterReorderItem({
           <p className="text-base font-bold text-[var(--app-accent)]">{semester.gpa.toFixed(3)}</p>
         </div>
         
-        {semester.isTracked && hasTrackerData && onSync && (
-          <button
-            type="button"
-            onPointerDownCapture={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSync();
-            }}
-            className="icon-button h-7 w-7 text-[var(--app-soft)] hover:text-[var(--app-accent)] hover:rotate-180 transition-all duration-300 flex items-center justify-center"
-            title="Sync with Term Tracker"
-          >
-            <RefreshCw size={13} />
-          </button>
-        )}
-
         <button 
           onPointerDownCapture={(e) => e.stopPropagation()}
           onClick={(e) => {
@@ -1946,8 +1958,6 @@ function CumulativeView({
   activeScaleKey,
   setActiveScaleKey,
   isWeighted,
-  coursesMap,
-  onSyncSemester,
   getCalculatedGPA,
   onGoToTerm
 }: { 
@@ -1961,8 +1971,6 @@ function CumulativeView({
   activeScaleKey: SchoolScaleKey;
   setActiveScaleKey: (key: SchoolScaleKey) => void;
   isWeighted: boolean;
-  coursesMap: Record<string, Course[]>;
-  onSyncSemester: (id: string) => void;
   getCalculatedGPA: (label: string, semester: string) => number | null;
   onGoToTerm: (label: string, semester: string) => void;
 }) {
@@ -1995,8 +2003,6 @@ function CumulativeView({
             className="apple-list bg-[var(--app-surface)]"
           >
             {semesters.map(s => {
-              const semKey = `${s.label} - ${s.semester}`;
-              const hasTrackerData = (coursesMap[semKey] || []).length > 0;
               return (
                 <SemesterReorderItem 
                   key={s.id} 
@@ -2005,8 +2011,6 @@ function CumulativeView({
                     setEditingSemester(s);
                   }}
                   onDelete={() => onDeleteSemester(s.id)}
-                  onSync={() => onSyncSemester(s.id)}
-                  hasTrackerData={hasTrackerData}
                 />
               );
             })}
