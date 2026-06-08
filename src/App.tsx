@@ -421,19 +421,7 @@ export default function App() {
   };
 
   const deleteSemesterGPA = (id: string) => {
-    const sem = cumulativeGPAs.find(s => s.id === id);
-    if (sem && sem.isTracked) {
-      if (window.confirm(`Deleting this semester will also delete all of its tracked courses. Continue?`)) {
-        setCoursesMap(prev => {
-          const next = { ...prev };
-          delete next[`${sem.label} - ${sem.semester}`];
-          return next;
-        });
-        setCumulativeGPAs(cumulativeGPAs.filter(s => s.id !== id));
-      }
-    } else {
-      setCumulativeGPAs(cumulativeGPAs.filter(s => s.id !== id));
-    }
+    setCumulativeGPAs(cumulativeGPAs.filter(s => s.id !== id));
   };
 
   const cumulativeGPAVal = useMemo(() => {
@@ -1942,8 +1930,6 @@ function SemesterReorderItem({
         >
           <Trash2 size={14} />
         </button>
-
-        <ChevronRight size={18} className="text-[var(--app-soft)] group-hover:text-[var(--app-accent)] transition-colors shrink-0" />
       </div>
     </Reorder.Item>
   );
@@ -2016,11 +2002,7 @@ function CumulativeView({
                   key={s.id} 
                   semester={s}
                   onTap={() => {
-                    if (s.isTracked) {
-                      onGoToTerm(s.label, s.semester);
-                    } else {
-                      setEditingSemester(s);
-                    }
+                    setEditingSemester(s);
                   }}
                   onDelete={() => onDeleteSemester(s.id)}
                   onSync={() => onSyncSemester(s.id)}
