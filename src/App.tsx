@@ -1295,7 +1295,7 @@ function AddAssessmentModal({
         className="modal-panel space-y-6 w-full mb-10"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center sticky top-0 bg-transparent backdrop-blur-xl -mt-2 pt-2 z-10">
+        <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">{initialAssessment ? 'Edit' : 'Add'} {type} Score</h2>
           {onDelete && (
             <button 
@@ -1473,7 +1473,7 @@ function AddCourseModal({
         className="modal-panel space-y-6 w-full mb-10"
         onClick={(e) => { e.stopPropagation(); setShowSuggestions(false); }}
       >
-        <div className="flex justify-between items-center sticky top-0 bg-transparent backdrop-blur-xl -mt-2 pt-2 z-10">
+        <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">{initialCourse ? 'Edit Course' : 'Add New Course'}</h2>
           <button onClick={onClose} className="icon-button h-10 w-10 -mr-1 text-[#8B95A1]">
             <X size={24} />
@@ -2157,7 +2157,7 @@ function AddSemesterModal({
         className="modal-panel space-y-6 w-full mb-10"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center sticky top-0 bg-transparent backdrop-blur-xl -mt-2 pt-2 z-10">
+        <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold dark:text-[#F9FAFB]">
             {isTracked ? 'Tracked Semester' : initialSemester ? 'Edit Semester' : 'Add Semester'}
           </h2>
